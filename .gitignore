@@ -1,0 +1,17 @@
+# Ignore artifacts
+artifacts/
+
+# Ignore build output
+[Bb]in/
+[Oo]bj/
+
+# IDE files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS files
+.DS_Store
+Thumbs.db

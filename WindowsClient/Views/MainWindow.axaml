@@ -1,0 +1,291 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:EnfyLiveScreenClient.ViewModels"
+        x:Class="EnfyLiveScreenClient.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1100"
+        Height="720"
+        MinWidth="1000"
+        MinHeight="650"
+        Title="Enfy Live Tracker"
+        Background="#0B1220"
+        WindowStartupLocation="CenterScreen">
+
+  <Window.Resources>
+    <ResourceDictionary>
+      <vm:StatusColorConverter x:Key="StatusColorConverter" />
+      <vm:PauseToResumeConverter x:Key="PauseToResumeConverter" />
+      <vm:StatusPulseConverter x:Key="StatusPulseConverter" />
+      <vm:DarkenColorConverter x:Key="DarkenColorConverter" />
+    </ResourceDictionary>
+  </Window.Resources>
+
+  <Window.Styles>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="#111827" />
+      <Setter Property="BorderBrush" Value="#1F2937" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="16" />
+    </Style>
+    <Style Selector="TextBlock.h2">
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#F8FAFC" />
+    </Style>
+    <Style Selector="TextBlock.label">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="#94A3B8" />
+    </Style>
+    <Style Selector="Button.action">
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="16,10" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button.action:pointerover">
+      <Setter Property="RenderTransform" Value="scale(1.01)" />
+    </Style>
+    <Style Selector="Button.action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+       <Setter Property="Background" Value="{Binding $parent[Button].Background, Converter={StaticResource DarkenColorConverter}}" />
+    </Style>
+  </Window.Styles>
+
+  <Panel>
+    <Grid RowDefinitions="Auto, *">
+      <!-- Top Navigation Bar -->
+      <Border Height="80" Background="#111827" BorderBrush="#1F2937" BorderThickness="0,0,0,1">
+        <Grid ColumnDefinitions="320, *, Auto, Auto" Margin="24,0">
+          
+          <!-- Column 0: User Profile Section -->
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="16">
+            <Border Width="44" Height="44" CornerRadius="22" Background="#1E293B">
+              <PathIcon Data="{StaticResource user_regular}" Width="20" Height="20" Foreground="#94A3B8" />
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{Binding CurrentUser}" 
+                         Foreground="#F8FAFC" 
+                         FontWeight="SemiBold" 
+                         FontSize="16"
+                         TextTrimming="CharacterEllipsis" />
+              <!-- Integrated Logout Link -->
+              <Button Command="{Binding LogoutCommand}"
+                      IsVisible="{Binding IsAuthenticated}"
+                      Padding="0" 
+                      Margin="0,2,0,0"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      HorizontalAlignment="Left">
+                <TextBlock Text="Sign Out" FontSize="11" Foreground="#EF4444" FontWeight="Medium" />
+              </Button>
+            </StackPanel>
+          </StackPanel>
+
+          <!-- Column 2: Stats (Work/Break) -->
+          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="32" Margin="0,0,32,0" IsVisible="{Binding IsAuthenticated}">
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4">
+                <PathIcon Data="{StaticResource clock_regular}" Width="12" Height="12" Foreground="#10B981" />
+                <TextBlock Text="WORK TODAY" FontSize="10" Foreground="#64748B" FontWeight="Bold" LetterSpacing="0.5" />
+              </StackPanel>
+              <TextBlock Text="{Binding WorkTodayDisplay}" FontSize="20" Foreground="#F8FAFC" FontWeight="Bold" />
+            </StackPanel>
+
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4">
+                <PathIcon Data="{StaticResource pause_regular}" Width="12" Height="12" Foreground="#F59E0B" />
+                <TextBlock Text="BREAK TODAY" FontSize="10" Foreground="#64748B" FontWeight="Bold" LetterSpacing="0.5" />
+              </StackPanel>
+              <TextBlock Text="{Binding BreakTodayDisplay}" FontSize="20" Foreground="#F8FAFC" FontWeight="Bold" />
+            </StackPanel>
+          </StackPanel>
+
+          <!-- Column 3: Action Buttons -->
+          <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Spacing="12" IsVisible="{Binding IsAuthenticated}">
+            <Button Classes="action" 
+                    Command="{Binding StartTrackingCommand}"
+                    IsVisible="{Binding CanShowStart}"
+                    Background="#10B981" Foreground="White">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <PathIcon Data="{StaticResource play_regular}" Width="14" Height="14" />
+                <TextBlock Text="{Binding IsPaused, Converter={StaticResource PauseToResumeConverter}}" />
+              </StackPanel>
+            </Button>
+
+            <Button Classes="action" 
+                    Command="{Binding PauseTrackingCommand}"
+                    IsVisible="{Binding CanShowPause}"
+                    Background="#F59E0B" Foreground="White">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <PathIcon Data="{StaticResource pause_regular}" Width="14" Height="14" />
+                <TextBlock Text="Break" />
+              </StackPanel>
+            </Button>
+
+            <Button Classes="action" 
+                    Command="{Binding StopTrackingCommand}"
+                    IsVisible="{Binding IsTrackingActive}"
+                    Background="#EF4444" Foreground="White">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <PathIcon Data="{StaticResource stop_regular}" Width="14" Height="14" />
+                <TextBlock Text="Finish" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Main Content Area -->
+      <ScrollViewer Grid.Row="1" IsVisible="{Binding IsAuthenticated}">
+        <StackPanel Margin="24" Spacing="24">
+          
+          <Grid ColumnDefinitions="*, *, *" RowDefinitions="Auto">
+            <Border Grid.Column="0" Classes="card" Margin="0,0,12,0">
+              <StackPanel Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <PathIcon Data="{StaticResource building_regular}" Width="18" Height="18" Foreground="#6366F1" />
+                  <TextBlock Text="Organization" Classes="h2" />
+                </StackPanel>
+                <TextBlock Text="{Binding OrgNameDisplay}" Foreground="#F8FAFC" FontSize="20" FontWeight="Bold" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <PathIcon Data="{StaticResource flag_regular}" Width="12" Height="12" Foreground="#94A3B8" />
+                  <TextBlock Text="{Binding TimezoneDisplay}" Classes="label" />
+                </StackPanel>
+                <StackPanel HorizontalAlignment="Center" Margin="0,20,0,10">
+                  <TextBlock Text="Organization Time" Classes="label" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                  <TextBlock Text="{Binding OrgTimeDisplay}" FontSize="32" Foreground="#F8FAFC" FontWeight="Bold" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Classes="card" Margin="12,0">
+               <StackPanel Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <PathIcon Data="{StaticResource clock_regular}" Width="18" Height="18" Foreground="#10B981" />
+                  <TextBlock Text="Work Time Tracking" Classes="h2" />
+                </StackPanel>
+                <Border HorizontalAlignment="Center" Padding="14,6" CornerRadius="14" Background="#1F2937">
+                  <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Ellipse Width="10" Height="10" 
+                             Opacity="{Binding IsTrackingActive, Converter={StaticResource StatusPulseConverter}}"
+                             Fill="{Binding IsTrackingActive, Converter={StaticResource StatusColorConverter}}" />
+                    <TextBlock Text="{Binding TrackingStatusText}" FontSize="14" FontWeight="Medium" Foreground="#CBD5E1" />
+                  </StackPanel>
+                </Border>
+                <TextBlock Text="{Binding TrackingStatusDetail}" TextWrapping="Wrap" TextAlignment="Center" FontSize="13" Foreground="#94A3B8" LineHeight="20" Margin="0,10" />
+                <Button Content="Connect" Command="{Binding ConnectCommand}" IsVisible="{Binding !IsConnected}" HorizontalAlignment="Center" Classes="action" Background="#6366F1" Foreground="White" />
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Classes="card" Margin="12,0,0,0">
+              <StackPanel Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <PathIcon Data="{StaticResource cloud_regular}" Width="18" Height="18" Foreground="#A855F7" />
+                  <TextBlock Text="Cloud Sync" Classes="h2" />
+                </StackPanel>
+                <StackPanel Spacing="6" Margin="0,10">
+                  <TextBlock Text="Last synced" Classes="label" />
+                  <TextBlock Text="{Binding LastSyncDisplay}" Foreground="#F8FAFC" FontSize="15" FontWeight="Medium" />
+                </StackPanel>
+                <Separator Background="#1F2937" Height="1" />
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10">
+                  <PathIcon Data="{StaticResource check_regular}" Width="16" Height="16" IsVisible="{Binding IsDataInSync}" Foreground="#10B981" />
+                  <TextBlock Text="Data is in sync" IsVisible="{Binding IsDataInSync}" Foreground="#10B981" FontSize="14" FontWeight="Medium"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <Border Classes="card">
+            <StackPanel Spacing="24">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <PathIcon Data="{StaticResource chart_regular}" Width="22" Height="22" Foreground="#3B82F6" />
+                <TextBlock Text="Last 30 Days Activity" Classes="h2" />
+              </StackPanel>
+              <Grid Height="220" VerticalAlignment="Bottom">
+                <ItemsControl ItemsSource="{Binding DailyActivityItems}" VerticalAlignment="Bottom">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <StackPanel VerticalAlignment="Bottom" Spacing="10" Margin="3,0">
+                        <Border Width="16" Height="{Binding Height}" CornerRadius="4,4,0,0" Background="#10B981">
+                          <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
+                        </Border>
+                        <TextBlock Text="{Binding Day}" FontSize="9" Foreground="#64748B" HorizontalAlignment="Center" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Border Height="1" Background="#1F2937" VerticalAlignment="Bottom" Margin="0,0,0,24" />
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <!-- Bottom Footer Info (Simplified) -->
+          <Grid ColumnDefinitions="*, Auto">
+             <StackPanel Orientation="Horizontal" Spacing="20">
+               <StackPanel Orientation="Horizontal" Spacing="8">
+                 <TextBlock Text="Connection:" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" />
+                 <TextBlock Text="{Binding ConnectionStatus}" Foreground="#34D399" FontSize="11" VerticalAlignment="Center" />
+               </StackPanel>
+               <Border Width="1" Height="12" Background="#1F2937" VerticalAlignment="Center" />
+               <StackPanel Orientation="Horizontal" Spacing="8">
+                 <TextBlock Text="Device ID:" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" />
+                 <SelectableTextBlock Text="{Binding DeviceId}" Foreground="#94A3B8" FontSize="11" VerticalAlignment="Center" />
+               </StackPanel>
+             </StackPanel>
+          </Grid>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+
+    <!-- Post-Auth Login Redirect Overlay (Optional if logout used) -->
+    <Border Background="#0B1220" IsVisible="{Binding !IsAuthenticated}">
+       <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="400" Spacing="40">
+         <StackPanel Spacing="16">
+            <TextBlock Text="Enfy Tracker" FontSize="48" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" />
+            <TextBlock Text="Premium Workplace Productivity" Foreground="#64748B" HorizontalAlignment="Center" FontSize="16" />
+         </StackPanel>
+         <Border Classes="card" Padding="40" Background="#111827">
+            <StackPanel Spacing="32">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Microsoft Sign-In" FontSize="20" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" />
+                <TextBlock Text="Sign in with your work account to connect the tracking agent." 
+                           Foreground="#94A3B8" TextAlignment="Center" FontSize="13" TextWrapping="Wrap" />
+              </StackPanel>
+              <Button Command="{Binding LoginCommand}" Classes="action" HorizontalAlignment="Stretch" Background="#6366F1" Foreground="White" Padding="20">
+                <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
+                  <PathIcon Data="{StaticResource user_regular}" Width="18" Height="18" />
+                  <TextBlock Text="Continue with Microsoft" FontWeight="Bold" />
+                </StackPanel>
+              </Button>
+              <TextBlock Text="{Binding StatusMessage}" Foreground="#EF4444" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+         </Border>
+       </StackPanel>
+    </Border>
+
+    <!-- Maintenance Overlay -->
+    <Border Background="#CC000000" IsVisible="{Binding IsMaintenanceActive}">
+       <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="20">
+          <Border Background="#1E293B" Padding="30" CornerRadius="24" BorderBrush="#EF4444" BorderThickness="2">
+             <StackPanel Spacing="16" HorizontalAlignment="Center">
+                <TextBlock Text="⚠" FontSize="48" HorizontalAlignment="Center" Foreground="#EF4444" />
+                <TextBlock Text="Maintenance Mode" FontSize="24" FontWeight="Bold" Foreground="#F8FAFC" />
+                <TextBlock Text="This device is currently being serviced by an administrator." 
+                           MaxWidth="300" TextWrapping="Wrap" TextAlignment="Center" Foreground="#94A3B8" />
+             </StackPanel>
+          </Border>
+       </StackPanel>
+    </Border>
+  </Panel>
+</Window>

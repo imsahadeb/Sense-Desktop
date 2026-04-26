@@ -1,0 +1,21 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EnfyLiveScreenClient.App"
+             RequestedThemeVariant="Default">
+  <Application.Resources>
+    <StreamGeometry x:Key="user_regular">M256 256A128 128 0 1 0 256 0a128 128 0 1 0 0 256zm-37.1 32c-31.7 0-59.5 18.5-73.4 45.8C62.3 365.1 0 449.2 0 512c0 13.3 10.7 24 24 24H488c13.3 0 24-10.7 24-24c0-62.8-62.3-146.9-145.5-178.2c-13.9-27.3-41.7-45.8-73.4-45.8H218.9z</StreamGeometry>
+    <StreamGeometry x:Key="clock_regular">M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4.5 15.5 11.5 19l112 64c6.7 3.8 15.3 1.5 19.1-5.2s1.5-15.3-5.2-19.1L264 251.1V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z</StreamGeometry>
+    <StreamGeometry x:Key="pause_regular">M128 64c0-35.3 28.7-64 64-64H320c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H192c-35.3 0-64-28.7-64-64V64z</StreamGeometry>
+    <StreamGeometry x:Key="play_regular">M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z</StreamGeometry>
+    <StreamGeometry x:Key="stop_regular">M0 128C0 92.7 28.7 64 64 64H384c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z</StreamGeometry>
+    <StreamGeometry x:Key="building_regular">M21 448c0 17.7 14.3 32 32 32h112v-64H64v64zm171 0h112v-64H192v64zm171 0H475c17.7 0 32-14.3 32-32s-14.3-32-32-32H384v64zM64 416H448V320H64v96zM448 288V64c0-35.3-28.7-64-64-64H128C92.7 0 64 28.7 64 64V288H448zM192 64h128v32H192V64zm0 64h128v32H192v-32zm0 64h128v32H192v-32z</StreamGeometry>
+    <StreamGeometry x:Key="cloud_regular">M0 336c0-79.5 64.5-144 144-144c5.7 0 11.3 .3 16.8 1c29.1-53.1 85.3-89 150-89c92.8 0 168 75.2 168 168c0 6.6-.4 13.2-1.1 19.7C536.8 310.2 576 360.5 576 416c0 79.5-64.5 144-144 144H144C64.5 560 0 495.5 0 416c0-31.5 10.1-60.7 27.2-84.4c-1.3-4.1-2.2-8.3-2.2-12.7c0-26.5 21.5-48 48-48c5.4 0 10.6 .9 15.4 2.5C106.8 214.3 151.2 192 201 192h8C290.7 192 360 261.3 360 347z</StreamGeometry>
+    <StreamGeometry x:Key="check_regular">M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z</StreamGeometry>
+    <StreamGeometry x:Key="chart_regular">M32 32c17.7 0 32 14.3 32 32V448H448c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V64C0 46.3 14.3 32 32 32zM448 352c17.7 0 32 14.3 32 32v64c0 17.7-14.3 32-32 32H320c-17.7 0-32-14.3-32-32V384c0-17.7 14.3-32 32-32h128zM320 224c17.7 0 32 14.3 32 32v192c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32V256c0-17.7 14.3-32 32-32h128zM192 96c17.7 0 32 14.3 32 32V448c0 17.7-14.3 32-32 32H64c-17.7 0-32-14.3-32-32V128c0-17.7 14.3-32 32-32h128z</StreamGeometry>
+    <StreamGeometry x:Key="flag_regular">M32 0C14.3 0 0 14.3 0 32V480c0 17.7 14.3 32 32 32s32-14.3 32-32V352h82.4c11.4 0 22.4-4.5 30.5-12.6l12.7-12.7H416c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32H256.4L243.7 51.3C235.6 43.1 224.6 38.6 213.2 38.6H32V0z</StreamGeometry>
+  </Application.Resources>
+
+  <Application.Styles>
+    <FluentTheme />
+  </Application.Styles>
+</Application>
