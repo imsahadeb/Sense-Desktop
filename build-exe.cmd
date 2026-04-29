@@ -5,17 +5,17 @@ set "ROOT_DIR=%~dp0"
 for %%I in ("%ROOT_DIR%") do set "ROOT_DIR=%%~fI"
 if "%ROOT_DIR:~-1%"=="\" set "ROOT_DIR=%ROOT_DIR:~0,-1%"
 
-set "PROJECT_FILE=%ROOT_DIR%\WindowsClient\EnfyLiveScreenClient.csproj"
+set "PROJECT_FILE=%ROOT_DIR%\EnfySense\EnfySense.csproj"
 set "VERSION=1.0.0"
 set "RUNTIME=win-x64"
 set "CONFIGURATION=Release"
 
 set "PUBLISH_DIR=%ROOT_DIR%\artifacts\windows\publish\%RUNTIME%"
-set "OUTPUT_EXE=%PUBLISH_DIR%\EnfyLiveScreenClient.exe"
+set "OUTPUT_EXE=%PUBLISH_DIR%\EnfySense.exe"
 
 echo.
 echo ==========================================
-echo Building EnfyLiveScreenClient.exe
+echo Building EnfySense.exe
 echo ==========================================
 echo Using fixed settings:
 echo Version: %VERSION%

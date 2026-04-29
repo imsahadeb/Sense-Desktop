@@ -2,9 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WindowsClient", "WindowsClient", "{D74FE0D2-A28E-733B-F34A-2AB4B1660C77}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EnfySense", "EnfySense", "{D74FE0D2-A28E-733B-F34A-2AB4B1660C77}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnfyLiveScreenClient", "WindowsClient\EnfyLiveScreenClient.csproj", "{12B4471F-1CE3-332E-9819-F3D763CAD8DA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnfySense", "EnfySense\EnfySense.csproj", "{12B4471F-1CE3-332E-9819-F3D763CAD8DA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -35,7 +35,7 @@ jobs:
 
       - name: Build Application
         run: |
-          dotnet publish WindowsClient/EnfyLiveScreenClient.csproj `
+          dotnet publish EnfySense/EnfySense.csproj `
             -c Release `
             -r win-x64 `
             --self-contained true `
@@ -47,11 +47,11 @@ jobs:
       - name: Package with Velopack
         run: |
           vpk pack `
-            -u EnfyLiveScreenClient `
+            -u EnfySense `
             -v ${{ env.VERSION }} `
             -p artifacts/publish `
             -o artifacts/releases `
-            -e EnfyLiveScreenClient.exe
+            -e EnfySense.exe
 
       - name: Upload to GitHub Releases
         run: |

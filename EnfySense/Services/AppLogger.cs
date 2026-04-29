@@ -18,9 +18,9 @@ public static class AppLogger
 {
     private static readonly string LogDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Enfy",
+        "EnfySense",
         "Logs");
-    private static readonly string LogFilePath = Path.Combine(LogDir, "enfy-live-screen.log");
+    private static readonly string LogFilePath = Path.Combine(LogDir, "enfysense.log");
 
     private static readonly object SyncRoot = new();
     public static string CurrentLogFilePath => LogFilePath;

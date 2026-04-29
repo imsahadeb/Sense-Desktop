@@ -5,8 +5,8 @@ set "ROOT_DIR=%~dp0"
 for %%I in ("%ROOT_DIR%") do set "ROOT_DIR=%%~fI"
 if "%ROOT_DIR:~-1%"=="\" set "ROOT_DIR=%ROOT_DIR:~0,-1%"
 
-set "PROJECT_FILE=%ROOT_DIR%\WindowsClient\EnfyLiveScreenClient.csproj"
-set "INSTALLER_SCRIPT=%ROOT_DIR%\WindowsClient\installer\EnfyLiveScreenClient.iss"
+set "PROJECT_FILE=%ROOT_DIR%\EnfySense\EnfySense.csproj"
+set "INSTALLER_SCRIPT=%ROOT_DIR%\EnfySense\installer\EnfySense.iss"
 set "VERSION=1.0.0"
 set "RUNTIME=win-x64"
 set "CONFIGURATION=Release"
@@ -16,7 +16,7 @@ set "INSTALLER_DIR=%ROOT_DIR%\artifacts\windows\installer"
 
 echo.
 echo ==========================================
-echo Building EnfyLiveScreenClient Setup EXE
+echo Building EnfySense Setup EXE
 echo ==========================================
 echo Using fixed settings:
 echo Version: %VERSION%
@@ -85,7 +85,7 @@ if errorlevel 1 (
 
 echo.
 echo Installer created successfully:
-echo %INSTALLER_DIR%\EnfyLiveScreenClient-Setup-%VERSION%.exe
+echo %INSTALLER_DIR%\EnfySense-Setup-%VERSION%.exe
 echo.
 echo Just double-click this file on Windows whenever you need a fresh installer.
 echo.

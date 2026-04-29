@@ -17,7 +17,7 @@ public sealed class AppConfig
     [JsonIgnore]
     public static string ConfigDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Enfy",
+        "EnfySense",
         "Config");
 
     [JsonIgnore]
