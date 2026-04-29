@@ -293,14 +293,14 @@
     <Border Background="#0B1220" IsVisible="{Binding !IsAuthenticated}">
        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="400" Spacing="40">
          <StackPanel Spacing="16">
-            <TextBlock Text="Enfy Tracker" FontSize="48" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" />
+            <TextBlock Text="EnfySense" FontSize="48" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" />
             <TextBlock Text="Premium Workplace Productivity" Foreground="#64748B" HorizontalAlignment="Center" FontSize="16" />
          </StackPanel>
          <Border Classes="card" Padding="40" Background="#111827">
             <StackPanel Spacing="32">
               <StackPanel Spacing="12">
                 <TextBlock Text="Microsoft Sign-In" FontSize="20" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" />
-                <TextBlock Text="Sign in with your work account to connect the tracking agent." 
+                <TextBlock Text="Sign in with your work account to connect the EnfySense." 
                            Foreground="#94A3B8" TextAlignment="Center" FontSize="13" TextWrapping="Wrap" />
               </StackPanel>
               <Button Command="{Binding LoginCommand}" Classes="action" HorizontalAlignment="Stretch" Background="#6366F1" Foreground="White" Padding="20">

@@ -15,7 +15,7 @@ set "RELEASES_DIR=%ROOT_DIR%\releases"
 
 echo.
 echo ==========================================
-echo Building EnfyLiveScreenClient with Velopack
+echo Building EnfySense with Velopack
 echo ==========================================
 echo Version: %VERSION%
 echo Runtime: %RUNTIME%
@@ -46,7 +46,7 @@ vpk pack ^
   -v %VERSION% ^
   -p "%PUBLISH_DIR%" ^
   -o "%RELEASES_DIR%" ^
-  -e EnfyLiveScreenClient.exe
+  -e EnfySense.exe
 
 if errorlevel 1 (
   echo Velopack packaging failed.
