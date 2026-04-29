@@ -114,6 +114,29 @@
             </StackPanel>
           </Button>
 
+          <!-- Admin Mode Indicator -->
+          <Border Grid.Column="1" 
+                  IsVisible="{Binding IsAdminMode}"
+                  Background="#3B82F6" 
+                  CornerRadius="20" 
+                  Padding="12,6" 
+                  VerticalAlignment="Center" 
+                  HorizontalAlignment="Left" 
+                  Margin="20,0">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <PathIcon Data="{StaticResource shield_regular}" Width="14" Height="14" Foreground="White" />
+              <TextBlock Text="ADMIN MODE" Foreground="White" FontSize="11" FontWeight="Black" VerticalAlignment="Center" />
+              <Border Width="1" Height="12" Background="White" Opacity="0.3" />
+              <TextBlock Text="{Binding AdminRemainingDisplay}" Foreground="White" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+              <Button Command="{Binding LockAdminCommand}" 
+                      Background="Transparent" 
+                      Padding="4" 
+                      Margin="4,0,0,0">
+                <PathIcon Data="{StaticResource lock_regular}" Width="12" Height="12" Foreground="White" />
+              </Button>
+            </StackPanel>
+          </Border>
+
           <!-- Column 2: Stats (Work/Break) -->
           <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="32" Margin="0,0,32,0" IsVisible="{Binding IsAuthenticated}">
             <StackPanel VerticalAlignment="Center">

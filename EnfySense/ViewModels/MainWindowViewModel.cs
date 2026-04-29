@@ -25,6 +25,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private int _heartbeatTickCounter = 0;
     private readonly UpdateService _updateService = new();
     private DispatcherTimer? _updateTimer;
+    private DispatcherTimer? _adminLockTimer;
+    private int _adminAutoLockSecondsRemaining = 0;
+    private const int DefaultAdminAutoLockSeconds = 60; // 1 minutes
 
     [ObservableProperty]
     private bool _isUpdateAvailable;
@@ -103,6 +106,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isAdminMode = false;
+    
+    [ObservableProperty]
+    private string _adminRemainingDisplay = "30:00";
 
     public bool IsTrackingStopped => !IsTrackingActive;
     public bool IsNotPaused => !IsPaused;
@@ -715,9 +721,59 @@ public partial class MainWindowViewModel : ViewModelBase
             if (result)
             {
                 IsAdminMode = true;
-                StatusMessage = "Admin Mode Unlocked.";
+                StatusMessage = "Admin Mode Unlocked. Maintenance active for 30 minutes.";
+                
+                // Unhide from Control Panel for maintenance
+                LockdownService.Instance.DisableStealthMode();
+                
+                StartAdminLockTimer();
             }
         }
+    }
+
+    [RelayCommand]
+    private void LockAdmin()
+    {
+        IsAdminMode = false;
+        _adminAutoLockSecondsRemaining = 0;
+        _adminLockTimer?.Stop();
+        
+        // Hide again in Control Panel
+        LockdownService.Instance.EnableStealthMode();
+        
+        StatusMessage = "Admin Mode Locked. Device secured.";
+        AppLogger.Log("Admin Mode manually locked.");
+    }
+
+    private void StartAdminLockTimer()
+    {
+        _adminAutoLockSecondsRemaining = DefaultAdminAutoLockSeconds;
+        
+        if (_adminLockTimer == null)
+        {
+            _adminLockTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _adminLockTimer.Tick += (s, e) => {
+                if (_adminAutoLockSecondsRemaining > 0)
+                {
+                    _adminAutoLockSecondsRemaining--;
+                    int mins = _adminAutoLockSecondsRemaining / 60;
+                    int secs = _adminAutoLockSecondsRemaining % 60;
+                    AdminRemainingDisplay = $"{mins:D2}:{secs:D2}";
+                    
+                    if (_adminAutoLockSecondsRemaining == 0)
+                    {
+                        LockAdmin();
+                        AppLogger.Log("Admin Mode auto-locked after timeout.");
+                    }
+                }
+            };
+        }
+        
+        _adminLockTimer.Start();
+        AppLogger.Log("Admin Mode unlocked. Timer started (30m).");
     }
 }
 
