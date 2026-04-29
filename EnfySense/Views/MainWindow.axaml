@@ -167,8 +167,22 @@
         <Grid ColumnDefinitions="*, Auto" Margin="24,10">
           <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
             <PathIcon Data="{StaticResource arrow_circle_up_regular}" Foreground="White" Width="18" Height="18" />
-            <TextBlock Text="A new update is ready! Restart now to stay up to date." 
-                       Foreground="White" FontWeight="Medium" VerticalAlignment="Center" />
+            <StackPanel Spacing="2">
+              <TextBlock Text="A new update is ready! Restart now to stay up to date." 
+                         Foreground="White" FontWeight="Medium" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding ReleaseNotes}" 
+                         Foreground="#BFDBFE" FontSize="11" 
+                         VerticalAlignment="Center" MaxWidth="600"
+                         TextTrimming="CharacterEllipsis"
+                         IsVisible="{Binding ReleaseNotes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <ToolTip.Tip>
+                  <StackPanel Spacing="5" Margin="5">
+                    <TextBlock Text="What's New:" FontWeight="Bold" Foreground="#3B82F6" />
+                    <TextBlock Text="{Binding ReleaseNotes}" MaxWidth="400" TextWrapping="Wrap" />
+                  </StackPanel>
+                </ToolTip.Tip>
+              </TextBlock>
+            </StackPanel>
           </StackPanel>
           <Button Grid.Column="1" 
                   Command="{Binding ApplyUpdateCommand}" 

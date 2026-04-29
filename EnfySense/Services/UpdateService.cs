@@ -12,6 +12,7 @@ public class UpdateService
     
     // Event to notify the UI when an update is ready
     public event Action? UpdateDownloaded;
+    public string? ReleaseNotes { get; private set; }
 
     public UpdateService()
     {
@@ -37,6 +38,9 @@ public class UpdateService
 
             AppLogger.Log("Update downloaded. Notifying UI...", LogLevel.Info);
             
+            // Capture release notes
+            ReleaseNotes = newVersion.TargetFullRelease.NotesMarkdown;
+
             // Notify the UI that the update is ready
             UpdateDownloaded?.Invoke();
         }

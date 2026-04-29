@@ -2,8 +2,10 @@ name: Release Windows Client
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    tags-ignore:
+      - 'v*' # Avoid double-triggering when the action itself creates a tag
 
 jobs:
   release:
@@ -17,6 +19,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Generate Next Version
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -25,12 +34,19 @@ jobs:
       - name: Install Velopack CLI
         run: dotnet tool install -g vpk
 
-      - name: Get Version from Tag
-        id: get_version
+      - name: Set Version Environment Variable
         run: |
-          $tag = "${{ github.ref_name }}"
-          $version = $tag.TrimStart('v')
-          echo "VERSION=$version" >> $env:GITHUB_ENV
+          echo "VERSION=${{ steps.tag_version.outputs.new_version }}" >> $env:GITHUB_ENV
+          echo "TAG=${{ steps.tag_version.outputs.new_tag }}" >> $env:GITHUB_ENV
+          
+          # Use RELEASE_NOTES.md if it exists, otherwise use the automated changelog
+          if (Test-Path "RELEASE_NOTES.md") {
+              Get-Content "RELEASE_NOTES.md" -Raw > release_notes.txt
+              echo "Using manual release notes from RELEASE_NOTES.md"
+          } else {
+              echo "${{ steps.tag_version.outputs.changelog }}" > release_notes.txt
+              echo "Using automated release notes from commit messages"
+          }
         shell: powershell
 
       - name: Build Application
@@ -51,14 +67,15 @@ jobs:
             -v ${{ env.VERSION }} `
             -p artifacts/publish `
             -o artifacts/releases `
-            -e EnfySense.exe
+            -e EnfySense.exe `
+            --releaseNotes release_notes.txt
 
       - name: Upload to GitHub Releases
         run: |
           vpk upload github `
             --repoUrl https://github.com/${{ github.repository }} `
             --publish `
-            --releaseName "Release ${{ github.ref_name }}" `
-            --tag ${{ github.ref_name }} `
+            --releaseName "Release ${{ env.TAG }}" `
+            --tag ${{ env.TAG }} `
             --token ${{ secrets.GITHUB_TOKEN }} `
             --outputDir artifacts/releases

@@ -1,0 +1,5 @@
+- 🚀 Renamed to EnfySense for fresh new branding
+- 🔄 Automated background update checks every 4 hours
+- 🖱 New "Update & Restart" button for instant installation
+- 👤 Added Profile Dropdown Menu with Settings and Manual Update check
+- 📋 Integrated "What's New" feature list in the update notification

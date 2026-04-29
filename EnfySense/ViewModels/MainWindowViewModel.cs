@@ -30,6 +30,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isUpdateAvailable;
 
     [ObservableProperty]
+    private string? _releaseNotes;
+
+    [ObservableProperty]
     private string _backendUrl = string.Empty;
 
     [ObservableProperty]
@@ -139,7 +142,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void InitializeUpdateService()
     {
-        _updateService.UpdateDownloaded += () => Dispatcher.UIThread.Post(() => IsUpdateAvailable = true);
+        _updateService.UpdateDownloaded += () => Dispatcher.UIThread.Post(() => {
+            ReleaseNotes = _updateService.ReleaseNotes;
+            IsUpdateAvailable = true;
+        });
         
         // Initial check after 5 seconds
         _ = Task.Run(async () =>
