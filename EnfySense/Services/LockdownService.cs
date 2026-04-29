@@ -83,7 +83,7 @@ public sealed class LockdownService
         }
         catch (Exception ex)
         {
-            AppLogger.Log($"Failed to access registry at {root.Name}\\{subKeyPath}: {ex.Message}", LogLevel.Warning);
+            AppLogger.Log($"Failed to access registry at {root.Name}\\{subKeyPath}: {ex.Message}", LogLevel.Warn);
         }
         
         return false;

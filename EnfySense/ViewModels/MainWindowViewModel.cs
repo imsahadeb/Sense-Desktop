@@ -110,6 +110,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _adminRemainingDisplay = "30:00";
 
+    [ObservableProperty]
+    private string _appVersion = "1.0.0";
+
     public bool IsTrackingStopped => !IsTrackingActive;
     public bool IsNotPaused => !IsPaused;
     public bool CanShowPause => IsTrackingActive && !IsPaused;
@@ -147,6 +150,9 @@ public partial class MainWindowViewModel : ViewModelBase
         SeedMockActivityData();
         InitializeUiTimer();
         InitializeUpdateService();
+
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        AppVersion = version?.ToString(3) ?? "1.0.0";
     }
 
     private void InitializeUpdateService()

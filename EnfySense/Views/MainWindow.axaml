@@ -326,6 +326,11 @@
                  <TextBlock Text="Device ID:" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" />
                  <SelectableTextBlock Text="{Binding DeviceId}" Foreground="#94A3B8" FontSize="11" VerticalAlignment="Center" />
                </StackPanel>
+               <Border Width="1" Height="12" Background="#1F2937" VerticalAlignment="Center" />
+               <StackPanel Orientation="Horizontal" Spacing="8">
+                 <TextBlock Text="Version:" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" />
+                 <TextBlock Text="{Binding AppVersion}" Foreground="#94A3B8" FontSize="11" VerticalAlignment="Center" />
+               </StackPanel>
              </StackPanel>
           </Grid>
         </StackPanel>
