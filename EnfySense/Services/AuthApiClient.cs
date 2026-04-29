@@ -121,6 +121,24 @@ public sealed class AuthApiClient
         }
     }
 
+    public async Task<List<string>> FetchAdminSecretsAsync(
+        string backendUrl,
+        string accessToken,
+        CancellationToken cancellationToken = default)
+    {
+        using var client = CreateClient(backendUrl);
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var response = await client.GetAsync("auth/admin-secrets", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return new List<string>();
+        }
+
+        var secrets = await response.Content.ReadFromJsonAsync<List<string>>(JsonOptions, cancellationToken);
+        return secrets ?? new List<string>();
+    }
+
     private async Task<AuthSession> ExchangeSsoCodeAsync(
         string backendUrl,
         string code,

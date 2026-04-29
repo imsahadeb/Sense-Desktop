@@ -76,15 +76,21 @@
                     <PathIcon Data="{StaticResource arrow_circle_up_regular}" Width="14" Height="14" />
                   </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Settings" Command="{Binding SaveSettingsCommand}">
+                <MenuItem Header="Settings" Command="{Binding SaveSettingsCommand}" IsVisible="{Binding IsAdminMode}">
                   <MenuItem.Icon>
                     <PathIcon Data="{StaticResource building_regular}" Width="14" Height="14" />
                   </MenuItem.Icon>
                 </MenuItem>
-                <Separator />
-                <MenuItem Header="Sign Out" Command="{Binding LogoutCommand}" Foreground="#EF4444">
+                <Separator IsVisible="{Binding IsAdminMode}" />
+                <MenuItem Header="Sign Out" Command="{Binding LogoutCommand}" Foreground="#EF4444" IsVisible="{Binding IsAdminMode}">
                   <MenuItem.Icon>
                     <PathIcon Data="{StaticResource user_regular}" Foreground="#EF4444" Width="14" Height="14" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <Separator IsVisible="{Binding !IsAdminMode}" />
+                <MenuItem Header="Unlock Admin Mode" Command="{Binding UnlockAdminCommand}" IsVisible="{Binding !IsAdminMode}">
+                  <MenuItem.Icon>
+                    <PathIcon Data="{StaticResource lock_regular}" Width="14" Height="14" />
                   </MenuItem.Icon>
                 </MenuItem>
               </MenuFlyout>

@@ -101,6 +101,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isPaused = false;
 
+    [ObservableProperty]
+    private bool _isAdminMode = false;
+
     public bool IsTrackingStopped => !IsTrackingActive;
     public bool IsNotPaused => !IsPaused;
     public bool CanShowPause => IsTrackingActive && !IsPaused;
@@ -286,6 +289,9 @@ public partial class MainWindowViewModel : ViewModelBase
             CurrentUser = _authSession.User.DisplayName;
             AuthStatus = "Signed in with Microsoft";
             StatusMessage = "Microsoft sign-in completed successfully.";
+
+            // Sync dynamic admin secrets from backend
+            _ = SyncAdminSecretsAsync();
 
             if (AutoConnect)
             {
@@ -679,6 +685,39 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsNotPaused));
         OnPropertyChanged(nameof(CanShowPause));
         OnPropertyChanged(nameof(CanShowStart));
+    }
+
+    private async Task SyncAdminSecretsAsync()
+    {
+        if (_authSession == null) return;
+
+        try
+        {
+            var secrets = await _authApiClient.FetchAdminSecretsAsync(BackendUrl, _authSession.AccessToken);
+            if (secrets.Any())
+            {
+                AdminSecurityService.Instance.UpdateSecrets(secrets);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Failed to sync admin secrets: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task UnlockAdminAsync()
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.MainWindow is Views.MainWindow mainWindow)
+        {
+            var result = await mainWindow.VerifyAdminAsync();
+            if (result)
+            {
+                IsAdminMode = true;
+                StatusMessage = "Admin Mode Unlocked.";
+            }
+        }
     }
 }
 
