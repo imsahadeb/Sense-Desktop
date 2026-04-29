@@ -1,0 +1,64 @@
+name: Release Windows Client
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Get Version from Tag
+        id: get_version
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+        shell: powershell
+
+      - name: Build Application
+        run: |
+          dotnet publish WindowsClient/EnfyLiveScreenClient.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=${{ env.VERSION }} `
+            -o artifacts/publish
+
+      - name: Package with Velopack
+        run: |
+          vpk pack `
+            -u EnfyLiveScreenClient `
+            -v ${{ env.VERSION }} `
+            -p artifacts/publish `
+            -o artifacts/releases `
+            -e EnfyLiveScreenClient.exe
+
+      - name: Upload to GitHub Releases
+        run: |
+          vpk upload github `
+            --repoUrl https://github.com/${{ github.repository }} `
+            --publish `
+            --releaseName "Release ${{ github.ref_name }}" `
+            --tag ${{ github.ref_name }} `
+            --token ${{ secrets.GITHUB_TOKEN }} `
+            --pkgDir artifacts/releases

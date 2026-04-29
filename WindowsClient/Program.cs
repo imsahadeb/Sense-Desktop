@@ -2,6 +2,7 @@ using Avalonia;
 using System;
 using System.Threading.Tasks;
 using EnfyLiveScreenClient.Services;
+using Velopack;
 
 namespace EnfyLiveScreenClient;
 
@@ -10,6 +11,9 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // It's important to run Velopack as early as possible in your App startup.
+        VelopackApp.Build().Run();
+
         // Setup global exception handling
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {

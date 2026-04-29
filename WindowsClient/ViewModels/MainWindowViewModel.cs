@@ -22,6 +22,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private TimeSpan _workTodayAccumulated = TimeSpan.Zero;
     private TimeSpan _breakTodayAccumulated = TimeSpan.Zero;
     private bool _hasInitialStatsSync = false;
+    private int _heartbeatTickCounter = 0;
 
     [ObservableProperty]
     private string _backendUrl = string.Empty;
@@ -75,10 +76,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _orgTimeDisplay = "--:-- --";
 
     [ObservableProperty]
-    private string _timezoneDisplay = "Asia/Calcutta";
+    private string _timezoneDisplay = "Eastern Time (US)";
 
     [ObservableProperty]
-    private string _orgNameDisplay = "enfy";
+    private string _orgNameDisplay = "enfycon inc.";
 
     [ObservableProperty]
     private string _lastSyncDisplay = "Never synced";
@@ -114,7 +115,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel()
     {
         _config = AppConfig.Load();
-        BackendUrl = "http://192.168.1.54:3000";
+        BackendUrl = "http://192.168.1.9:3000";
         SsoRedirectUri = "http://localhost:3001/callback";
         DeviceName = string.IsNullOrWhiteSpace(_config.DeviceNameOverride)
             ? Environment.MachineName
@@ -166,30 +167,54 @@ public partial class MainWindowViewModel : ViewModelBase
         _uiTimer.Start();
     }
 
+    private DateTime _lastCheckedDate = DateTime.Today;
+
     private void UpdateDashboardTick()
     {
-        OrgTimeDisplay = DateTime.Now.ToString("hh:mm tt");
+        var easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+        var easternTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, easternZone);
+
+        if (easternTime.Date != _lastCheckedDate)
+        {
+            AppLogger.Log($"Day changed from {_lastCheckedDate:yyyy-MM-dd} to {easternTime.Date:yyyy-MM-dd} (Eastern). Resetting daily counters.", LogLevel.Info);
+            _lastCheckedDate = easternTime.Date;
+            _workTodayAccumulated = TimeSpan.Zero;
+            _breakTodayAccumulated = TimeSpan.Zero;
+            if (IsTrackingActive)
+            {
+                _trackingStartedAt = DateTime.UtcNow;
+            }
+        }
+
+        OrgTimeDisplay = easternTime.ToString("hh:mm tt");
         
+        TimeSpan totalWork = _workTodayAccumulated;
+        TimeSpan totalBreak = _breakTodayAccumulated;
+
         if (IsTrackingActive && _trackingStartedAt.HasValue)
         {
             var currentSession = DateTime.UtcNow - _trackingStartedAt.Value;
             if (IsPaused)
             {
-                var totalBreak = _breakTodayAccumulated + currentSession;
-                BreakTodayDisplay = FormatTimeSpan(totalBreak);
-                WorkTodayDisplay = FormatTimeSpan(_workTodayAccumulated);
+                totalBreak += currentSession;
             }
             else
             {
-                var totalWork = _workTodayAccumulated + currentSession;
-                WorkTodayDisplay = FormatTimeSpan(totalWork);
-                BreakTodayDisplay = FormatTimeSpan(_breakTodayAccumulated);
+                totalWork += currentSession;
             }
         }
-        else
+        
+        WorkTodayDisplay = FormatTimeSpan(totalWork);
+        BreakTodayDisplay = FormatTimeSpan(totalBreak);
+
+        if (IsConnected && _agent != null)
         {
-            WorkTodayDisplay = FormatTimeSpan(_workTodayAccumulated);
-            BreakTodayDisplay = FormatTimeSpan(_breakTodayAccumulated);
+            _heartbeatTickCounter++;
+            if (_heartbeatTickCounter >= 10) // Every 10 seconds
+            {
+                _heartbeatTickCounter = 0;
+                _ = _agent.SendHeartbeatAsync((int)totalWork.TotalSeconds, (int)totalBreak.TotalSeconds);
+            }
         }
     }
 
@@ -363,8 +388,12 @@ public partial class MainWindowViewModel : ViewModelBase
         TrackingStatusDetail = "Your work time is currently being recorded.";
         StatusMessage = "Work tracking started.";
 
+        if (_activityService != null) _activityService.IsEnabled = true;
+
         if (_agent != null)
         {
+            // Update dashboard immediately with latest counts
+            _ = _agent.SendHeartbeatAsync((int)_workTodayAccumulated.TotalSeconds, (int)_breakTodayAccumulated.TotalSeconds);
             _ = _agent.ReportWorkStatusAsync("WORKING");
         }
 
@@ -387,8 +416,12 @@ public partial class MainWindowViewModel : ViewModelBase
         TrackingStatusDetail = "You are currently on a break. Cumulative break time is being recorded.";
         StatusMessage = "Break mode active.";
 
+        if (_activityService != null) _activityService.IsEnabled = false;
+
         if (_agent != null)
         {
+            // Update dashboard immediately with latest counts
+            _ = _agent.SendHeartbeatAsync((int)_workTodayAccumulated.TotalSeconds, (int)_breakTodayAccumulated.TotalSeconds);
             _ = _agent.ReportWorkStatusAsync("BREAK");
         }
 
@@ -415,8 +448,12 @@ public partial class MainWindowViewModel : ViewModelBase
         TrackingStatusDetail = "Work time is not being tracked and no data is being collected.";
         StatusMessage = "Work tracking stopped.";
 
+        if (_activityService != null) _activityService.IsEnabled = false;
+
         if (_agent != null)
         {
+            // Update dashboard immediately with latest counts
+            _ = _agent.SendHeartbeatAsync((int)_workTodayAccumulated.TotalSeconds, (int)_breakTodayAccumulated.TotalSeconds);
             _ = _agent.ReportWorkStatusAsync("STOPPED");
         }
 
@@ -487,7 +524,7 @@ public partial class MainWindowViewModel : ViewModelBase
             BackendUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase) &&
             message.Contains("actively refused", StringComparison.OrdinalIgnoreCase))
         {
-            return "Backend connection was refused. If the Windows client is running on a different machine, replace localhost with your backend server IP, for example http://192.168.1.54:3000.";
+            return "Backend connection was refused. If the Windows client is running on a different machine, replace localhost with your backend server IP, for example http://192.168.1.9:3000.";
         }
 
         return message;
@@ -600,7 +637,7 @@ public class PauseToResumeConverter : Avalonia.Data.Converters.IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
         if (value is bool isPaused && isPaused)
-            return "Resume";
+            return "Resume Work";
         return "Start";
     }
 

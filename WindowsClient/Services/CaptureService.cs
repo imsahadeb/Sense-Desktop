@@ -50,7 +50,15 @@ public sealed class CaptureService : IDisposable
         }
 
         // Capture
-        _sourceGraphics!.CopyFromScreen(0, 0, 0, 0, _sourceBitmap.Size);
+        try
+        {
+            _sourceGraphics!.CopyFromScreen(0, 0, 0, 0, _sourceBitmap.Size);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log(ex, "GDI+ CopyFromScreen failed");
+            throw;
+        }
 
         // Resize
         if (sourceWidth == outputWidth && sourceHeight == outputHeight)
@@ -66,6 +74,7 @@ public sealed class CaptureService : IDisposable
         var jpegEncoder = GetJpegEncoder();
         if (jpegEncoder == null)
         {
+            AppLogger.Log("No JPEG encoder found, using default Save format.", LogLevel.Warn);
             _outputBitmap.Save(memoryStream, ImageFormat.Jpeg);
             return memoryStream.ToArray();
         }
@@ -74,7 +83,17 @@ public sealed class CaptureService : IDisposable
         encoderParameters.Param[0] = new EncoderParameter(
             Encoder.Quality,
             Math.Clamp(jpegQuality, 25L, 90L));
-        _outputBitmap.Save(memoryStream, jpegEncoder, encoderParameters);
+        
+        try
+        {
+            _outputBitmap.Save(memoryStream, jpegEncoder, encoderParameters);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log(ex, "JPEG Encoding/Save failed");
+            throw;
+        }
+        
         return memoryStream.ToArray();
     }
 

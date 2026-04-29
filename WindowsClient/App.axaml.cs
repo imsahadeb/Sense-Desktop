@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using System.Threading.Tasks;
 using Avalonia.Markup.Xaml;
 using EnfyLiveScreenClient.ViewModels;
 using EnfyLiveScreenClient.Views;
+using EnfyLiveScreenClient.Services;
 
 namespace EnfyLiveScreenClient;
 
@@ -21,6 +23,13 @@ public partial class App : Application
             {
                 DataContext = new MainWindowViewModel(),
             };
+
+            // Start background update check
+            _ = Task.Run(async () =>
+            {
+                var updateService = new UpdateService();
+                await updateService.CheckForUpdatesAsync();
+            });
         }
 
         base.OnFrameworkInitializationCompleted();

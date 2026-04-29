@@ -7,7 +7,7 @@
         Height="720"
         MinWidth="1000"
         MinHeight="650"
-        Title="Enfy Live Tracker"
+        Title="EnfySense"
         Background="#0B1220"
         WindowStartupLocation="CenterScreen">
 
@@ -123,7 +123,7 @@
                     Background="#F59E0B" Foreground="White">
               <StackPanel Orientation="Horizontal" Spacing="10">
                 <PathIcon Data="{StaticResource pause_regular}" Width="14" Height="14" />
-                <TextBlock Text="Break" />
+                <TextBlock Text="Take a Break" />
               </StackPanel>
             </Button>
 

@@ -65,10 +65,11 @@ public sealed class BackgroundCaptureService : IDisposable
         while (!token.IsCancellationRequested)
         {
             var policy = PolicyManager.Instance.CurrentPolicy;
+            AppLogger.Log($"Background loop iteration started. Policy: {policy.Name}, Interval: {policy.Config.ScreenshotIntervalSec}s, Maintenance: {policy.MaintenanceMode}", LogLevel.Debug);
             
             if (policy.MaintenanceMode)
             {
-                AppLogger.Log("Maintenance mode active. Skipping capture.", LogLevel.Debug);
+                AppLogger.Log("Maintenance mode active. Skipping capture and waiting 5s.", LogLevel.Debug);
                 await Task.Delay(5000, token);
                 continue;
             }
@@ -79,10 +80,11 @@ public sealed class BackgroundCaptureService : IDisposable
                 var idleSeconds = GetIdleTimeSeconds();
                 bool isIdle = idleSeconds >= (policy.Config.IdleThresholdSec > 0 ? policy.Config.IdleThresholdSec : 600);
 
-                AppLogger.Log($"Capturing screen (Trigger: {(isIdle ? "IDLE" : "SCHEDULED")}, Idle: {idleSeconds}s, Policy: {policy.Name})", LogLevel.Debug);
+                AppLogger.Log($"Triggering capture attempt. Trigger: {(isIdle ? "IDLE" : "SCHEDULED")}, Idle: {idleSeconds}s", LogLevel.Info);
                 
                 // Capture screen
                 var bytes = _captureService.CaptureScreen(0, 0, policy.Config.ScreenshotQuality);
+                AppLogger.Log($"Screen captured. Size: {bytes.Length} bytes. Quality: {policy.Config.ScreenshotQuality}", LogLevel.Info);
                 
                 var metadata = new
                 {
@@ -93,12 +95,16 @@ public sealed class BackgroundCaptureService : IDisposable
                     policyId = policy.Id
                 };
 
-                AppLogger.Log($"Captured {bytes.Length} bytes. Sending to agent...", LogLevel.Trace);
+                AppLogger.Log($"Attempting to send capture to agent... (User: {_agent.UserName}, Device: {_agent.DeviceId})", LogLevel.Debug);
                 bool sent = await _agent.SendBackgroundCaptureAsync(bytes, metadata);
                 
-                if (!sent)
+                if (sent)
                 {
-                    AppLogger.Log("Agent failed to send capture. Saving to offline queue.", LogLevel.Warn);
+                    AppLogger.Log("Background capture successfully sent to server.", LogLevel.Info);
+                }
+                else
+                {
+                    AppLogger.Log("Agent failed to send capture (maybe disconnected). Saving to offline queue.", LogLevel.Warn);
                     await OfflineQueueService.Instance.SaveToQueueAsync(bytes, metadata);
                 }
 
@@ -107,7 +113,7 @@ public sealed class BackgroundCaptureService : IDisposable
                 var jitterRange = (int)(baseIntervalMs * 0.15);
                 var actualIntervalMs = baseIntervalMs + _random.Next(-jitterRange, jitterRange);
 
-                AppLogger.Log($"Background capture session complete. Next capture in {actualIntervalMs / 1000}s. Policy: {policy.Name}", LogLevel.Info);
+                AppLogger.Log($"Background capture session complete. Next capture scheduled in {actualIntervalMs / 1000}s.", LogLevel.Info);
                 
                 // Responsive wait: sleep in 5s increments to pick up policy changes/cancellation faster
                 var remainingMs = actualIntervalMs;
@@ -121,20 +127,21 @@ public sealed class BackgroundCaptureService : IDisposable
                     var updatedPolicy = PolicyManager.Instance.CurrentPolicy;
                     if (updatedPolicy.Id != policy.Id || updatedPolicy.Config.ScreenshotIntervalSec != policy.Config.ScreenshotIntervalSec)
                     {
-                        AppLogger.Log("Policy changed during wait. Re-evaluating loop immediately.", LogLevel.Debug);
+                        AppLogger.Log($"Policy changed from {policy.Config.ScreenshotIntervalSec}s to {updatedPolicy.Config.ScreenshotIntervalSec}s. Restarting loop immediately.", LogLevel.Info);
                         break;
                     }
                 }
             }
             catch (OperationCanceledException) 
             {
-                AppLogger.Log("Background capture loop cancellation requested.", LogLevel.Info);
+                AppLogger.Log("Background capture loop cancellation requested. Exiting loop.", LogLevel.Info);
                 break; 
             }
             catch (Exception ex)
             {
-                AppLogger.Log(ex, "Background capture loop");
-                await Task.Delay(30000, token); // Wait before retry
+                AppLogger.Log(ex, "Background capture loop CRASHED with exception");
+                AppLogger.Log("Waiting 30s before retrying capture loop...", LogLevel.Warn);
+                await Task.Delay(30000, token); 
             }
         }
     }

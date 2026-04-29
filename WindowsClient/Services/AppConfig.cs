@@ -7,7 +7,7 @@ namespace EnfyLiveScreenClient.Services;
 
 public sealed class AppConfig
 {
-    public string BackendUrl { get; set; } = "http://192.168.1.54:5000";
+    public string BackendUrl { get; set; } = "http://192.168.1.9:5000";
     public bool AutoConnect { get; set; } = true;
     public string DeviceNameOverride { get; set; } = "";
     public string KeycloakIssuer { get; set; } = "https://auth.enfycon.com/realms/submission_tracker";

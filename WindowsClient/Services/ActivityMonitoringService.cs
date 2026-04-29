@@ -22,7 +22,30 @@ public class ActivityMonitoringService : IDisposable
     private DateTime _startTime;
     private DateTime _lastFlushTime = DateTime.UtcNow;
     private bool _isCurrentlyIdle;
+    private bool _isEnabled = true;
     private const int IDLE_THRESHOLD_SECONDS = 300; // 5 minutes
+
+    public bool IsEnabled 
+    { 
+        get => _isEnabled; 
+        set 
+        {
+            if (_isEnabled == value) return;
+            _isEnabled = value;
+            if (!_isEnabled)
+            {
+                RecordCurrentActivity();
+                FlushBuffer();
+                _lastApp = null;
+                _lastTitle = null;
+                _lastUrl = null;
+            }
+            else
+            {
+                _startTime = DateTime.UtcNow;
+            }
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     struct LASTINPUTINFO
@@ -52,6 +75,7 @@ public class ActivityMonitoringService : IDisposable
 
     private void OnTick(object? state)
     {
+        if (!_isEnabled) return;
         try
         {
             CheckIdleStatus();

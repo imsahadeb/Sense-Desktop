@@ -336,6 +336,27 @@ public sealed class LiveStreamAgent : IDisposable
         }
     }
 
+    public async Task<bool> SendHeartbeatAsync(int workTimeSeconds, int breakTimeSeconds)
+    {
+        if (!_isConnected || _socket == null) return false;
+
+        try
+        {
+            await _socket.EmitAsync("device-heartbeat", new
+            {
+                deviceId = _deviceId,
+                workTimeSeconds = workTimeSeconds,
+                breakTimeSeconds = breakTimeSeconds
+            });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log(ex, "SendHeartbeatAsync");
+            return false;
+        }
+    }
+
     private static string GetHardwareId()
     {
         try
