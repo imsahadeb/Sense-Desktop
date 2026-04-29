@@ -32,6 +32,22 @@ public sealed class LockdownService
         SetRegistryVisibility(isHidden: false);
     }
 
+    /// <summary>
+    /// Ensures the application starts automatically when Windows boots.
+    /// </summary>
+    public void EnableAutoStart()
+    {
+        SetAutoStart(enabled: true);
+    }
+
+    /// <summary>
+    /// Removes the auto-start entry.
+    /// </summary>
+    public void DisableAutoStart()
+    {
+        SetAutoStart(enabled: false);
+    }
+
     private void SetRegistryVisibility(bool isHidden)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return;
@@ -51,6 +67,39 @@ public sealed class LockdownService
         catch (Exception ex)
         {
             AppLogger.Log($"Error updating registry stealth mode: {ex.Message}", LogLevel.Error);
+        }
+    }
+
+    private void SetAutoStart(bool enabled)
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return;
+
+        string runKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+        string exePath = Environment.ProcessPath ?? string.Empty;
+
+        if (string.IsNullOrEmpty(exePath)) return;
+
+        try
+        {
+            // We use HKCU for auto-start to ensure it works even if the user isn't running as full admin
+            // but for kiosk machines, the user is usually a managed admin.
+            using var key = Registry.CurrentUser.OpenSubKey(runKeyPath, writable: true);
+            if (key != null)
+            {
+                if (enabled)
+                {
+                    key.SetValue(AppId, $"\"{exePath}\" --autostart");
+                }
+                else
+                {
+                    key.DeleteValue(AppId, throwOnMissingValue: false);
+                }
+                AppLogger.Log($"Auto-start {(enabled ? "ENABLED" : "DISABLED")} at {exePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Failed to update auto-start registry: {ex.Message}", LogLevel.Error);
         }
     }
 
@@ -96,7 +145,10 @@ public sealed class LockdownService
     /// </summary>
     public void ApplyHardening()
     {
-        // On startup, ensure we are hidden
+        // On startup, ensure we are hidden from Control Panel
         EnableStealthMode();
+        
+        // Ensure we start on next boot
+        EnableAutoStart();
     }
 }
