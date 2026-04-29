@@ -61,4 +61,4 @@ jobs:
             --releaseName "Release ${{ github.ref_name }}" `
             --tag ${{ github.ref_name }} `
             --token ${{ secrets.GITHUB_TOKEN }} `
-            --pkgDir artifacts/releases
+            --outputDir artifacts/releases
