@@ -23,13 +23,6 @@ public partial class App : Application
             {
                 DataContext = new MainWindowViewModel(),
             };
-
-            // Start background update check
-            _ = Task.Run(async () =>
-            {
-                var updateService = new UpdateService();
-                await updateService.CheckForUpdatesAsync();
-            });
         }
 
         base.OnFrameworkInitializationCompleted();

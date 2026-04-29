@@ -9,10 +9,12 @@ public class UpdateService
 {
     private readonly UpdateManager _updateManager;
     private readonly string _githubUrl = "https://github.com/imsahadeb/Sense-Desktop";
+    
+    // Event to notify the UI when an update is ready
+    public event Action? UpdateDownloaded;
 
     public UpdateService()
     {
-        // GitHubSource automatically handles checking the latest release on GitHub
         _updateManager = new UpdateManager(new GithubSource(_githubUrl, null, false));
     }
 
@@ -22,7 +24,6 @@ public class UpdateService
         {
             AppLogger.Log("Checking for updates...", LogLevel.Info);
             
-            // Check for new version
             var newVersion = await _updateManager.CheckForUpdatesAsync();
             if (newVersion == null)
             {
@@ -32,10 +33,12 @@ public class UpdateService
 
             AppLogger.Log($"Update available: {newVersion.TargetFullRelease.Version}. Downloading...", LogLevel.Info);
 
-            // Download new version
             await _updateManager.DownloadUpdatesAsync(newVersion);
 
-            AppLogger.Log("Update downloaded. It will be applied on next restart.", LogLevel.Info);
+            AppLogger.Log("Update downloaded. Notifying UI...", LogLevel.Info);
+            
+            // Notify the UI that the update is ready
+            UpdateDownloaded?.Invoke();
         }
         catch (Exception ex)
         {
@@ -45,10 +48,9 @@ public class UpdateService
 
     public void ApplyUpdatesAndRestart()
     {
-        // UpdatePendingRestart is the modern replacement for IsUpdatePendingRestart
         if (_updateManager.UpdatePendingRestart != null)
         {
-            // Passing null explicitly to apply the latest downloaded update
+            AppLogger.Log("Applying update and restarting...", LogLevel.Info);
             _updateManager.ApplyUpdatesAndRestart(null);
         }
     }

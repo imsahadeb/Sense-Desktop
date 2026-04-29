@@ -23,6 +23,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private TimeSpan _breakTodayAccumulated = TimeSpan.Zero;
     private bool _hasInitialStatsSync = false;
     private int _heartbeatTickCounter = 0;
+    private readonly UpdateService _updateService = new();
+    private DispatcherTimer? _updateTimer;
+
+    [ObservableProperty]
+    private bool _isUpdateAvailable;
 
     [ObservableProperty]
     private string _backendUrl = string.Empty;
@@ -129,6 +134,27 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SeedMockActivityData();
         InitializeUiTimer();
+        InitializeUpdateService();
+    }
+
+    private void InitializeUpdateService()
+    {
+        _updateService.UpdateDownloaded += () => Dispatcher.UIThread.Post(() => IsUpdateAvailable = true);
+        
+        // Initial check after 5 seconds
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(5000);
+            await _updateService.CheckForUpdatesAsync();
+        });
+
+        // Periodic check every 4 hours
+        _updateTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromHours(4)
+        };
+        _updateTimer.Tick += async (s, e) => await _updateService.CheckForUpdatesAsync();
+        _updateTimer.Start();
     }
 
     private void SeedMockActivityData()
@@ -507,6 +533,39 @@ public partial class MainWindowViewModel : ViewModelBase
         _config.AutoConnect = AutoConnect;
         _config.Save();
         StatusMessage = $"Settings saved to {AppConfig.ConfigPath}";
+    }
+
+    [RelayCommand]
+    private void ApplyUpdate()
+    {
+        _updateService.ApplyUpdatesAndRestart();
+    }
+
+    [RelayCommand]
+    private async Task ManualCheckForUpdatesAsync()
+    {
+        if (IsBusy) return;
+
+        try
+        {
+            IsBusy = true;
+            StatusMessage = "Checking for updates...";
+            await _updateService.CheckForUpdatesAsync();
+            
+            if (!IsUpdateAvailable)
+            {
+                StatusMessage = "You are already on the latest version.";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Failed to check for updates.";
+            AppLogger.Log(ex, "Manual update check failed");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private void ClearAuthState()
