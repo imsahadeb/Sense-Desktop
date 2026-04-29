@@ -186,7 +186,7 @@
               <StackPanel Spacing="16">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                   <PathIcon Data="{StaticResource cloud_regular}" Width="18" Height="18" Foreground="#A855F7" />
-                  <TextBlock Text="Cloud Sync" Classes="h2" />
+                  <TextBlock Text="Sync with Cloud" Classes="h2" />
                 </StackPanel>
                 <StackPanel Spacing="6" Margin="0,10">
                   <TextBlock Text="Last synced" Classes="label" />
