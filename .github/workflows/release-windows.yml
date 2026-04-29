@@ -49,6 +49,9 @@ jobs:
           }
         shell: powershell
 
+      - name: Restore Dependencies
+        run: dotnet restore EnfySense/EnfySense.csproj
+
       - name: Build Application
         run: |
           dotnet publish EnfySense/EnfySense.csproj `
