@@ -60,7 +60,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _streamStatus = "Idle";
 
     [ObservableProperty]
-    private string _statusMessage = "Ready";
+    private string _statusMessage = string.Empty;
 
     [ObservableProperty]
     private bool _isConnected;
@@ -111,7 +111,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _adminRemainingDisplay = "30:00";
 
     [ObservableProperty]
-    private string _appVersion = "1.0.0";
+    private string _appVersion = "1.0.15";
 
     public bool IsTrackingStopped => !IsTrackingActive;
     public bool IsNotPaused => !IsPaused;
@@ -556,7 +556,6 @@ public partial class MainWindowViewModel : ViewModelBase
         _config.DeviceNameOverride = DeviceName.Trim();
         _config.AutoConnect = AutoConnect;
         _config.Save();
-        StatusMessage = $"Settings saved to {AppConfig.ConfigPath}";
     }
 
     [RelayCommand]

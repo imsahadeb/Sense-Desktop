@@ -4,13 +4,13 @@ setlocal enabledelayedexpansion
 set "ROOT_DIR=%~dp0.."
 for %%I in ("%ROOT_DIR%") do set "ROOT_DIR=%%~fI"
 
-set "PROJECT_FILE=%ROOT_DIR%\WindowsClient\EnfyLiveScreenClient.csproj"
-set "INSTALLER_SCRIPT=%ROOT_DIR%\WindowsClient\installer\EnfyLiveScreenClient.iss"
+set "PROJECT_FILE=%ROOT_DIR%\EnfySense\EnfySense.csproj"
+set "INSTALLER_SCRIPT=%ROOT_DIR%\EnfySense\installer\EnfySense.iss"
 set "VERSION=%~1"
 set "RUNTIME=%~2"
 set "CONFIGURATION=%~3"
 
-if "%VERSION%"=="" set "VERSION=1.0.0"
+if "%VERSION%"=="" set "VERSION=1.0.15"
 if "%RUNTIME%"=="" set "RUNTIME=win-x64"
 if "%CONFIGURATION%"=="" set "CONFIGURATION=Release"
 

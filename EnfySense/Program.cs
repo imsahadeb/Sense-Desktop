@@ -32,7 +32,7 @@ internal static class Program
         try
         {
             var config = AppConfig.Load();
-            AppLogger.Log($"EnfySense starting. Version: 1.0.0, OS: {Environment.OSVersion}, Writeable Config: {AppConfig.ConfigPath}", LogLevel.Info);
+            AppLogger.Log($"EnfySense starting. Version: 1.0.15, OS: {Environment.OSVersion}, Writeable Config: {AppConfig.ConfigPath}", LogLevel.Info);
             AppLogger.Log($"Backend Target: {config.BackendUrl}, Device Name: {Environment.MachineName}", LogLevel.Info);
             
             // Apply Kiosk Hardening (Hide from Control Panel, etc.)

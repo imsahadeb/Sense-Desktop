@@ -6,7 +6,7 @@ for %%I in ("%ROOT_DIR%") do set "ROOT_DIR=%%~fI"
 if "%ROOT_DIR:~-1%"=="\" set "ROOT_DIR=%ROOT_DIR:~0,-1%"
 
 set "PROJECT_FILE=%ROOT_DIR%\EnfySense\EnfySense.csproj"
-set "VERSION=1.0.0"
+set "VERSION=1.0.15"
 set "RUNTIME=win-x64"
 set "CONFIGURATION=Release"
 

@@ -12,13 +12,13 @@ build-exe.cmd
 
 No arguments are needed. It always builds:
 
-- Version: `1.0.0`
+- Version: `1.0.15`
 - Runtime: `win-x64`
 - Configuration: `Release`
 
 This creates:
 
-- `artifacts\windows\publish\win-x64\EnfyLiveScreenClient.exe`
+- `artifacts\windows\publish\win-x64\EnfySense.exe`
 
 ## Double-click installer build on Windows
 
@@ -30,13 +30,13 @@ build-installer.cmd
 
 No arguments are needed. It always builds:
 
-- Version: `1.0.0`
+- Version: `1.0.15`
 - Runtime: `win-x64`
 - Configuration: `Release`
 
 This creates:
 
-- `artifacts\windows\installer\EnfyLiveScreenClient-Setup-1.0.0.exe`
+- `artifacts\windows\installer\EnfySense-Setup-1.0.15.exe`
 
 Requirements:
 
@@ -48,13 +48,13 @@ Requirements:
 From the project root:
 
 ```bash
-./scripts/build-windows-installer.sh --version 1.0.0 --skip-installer
+./scripts/build-windows-installer.sh --version 1.0.15 --skip-installer
 ```
 
 This produces:
 
-- `artifacts/windows/publish/win-x64/EnfyLiveScreenClient.exe`
-- `artifacts/windows/portable/EnfyLiveScreenClient-1.0.0-win-x64-portable.zip`
+- `artifacts/windows/publish/win-x64/EnfySense.exe`
+- `artifacts/windows/portable/EnfySense-1.0.15-win-x64-portable.zip`
 
 ## Installable `.exe`
 
@@ -66,9 +66,9 @@ Run this on a Windows machine with:
 Command:
 
 ```bat
-scripts\build-windows-installer.cmd 1.0.0 win-x64 Release
+scripts\build-windows-installer.cmd 1.0.15 win-x64 Release
 ```
 
 This produces an installer in:
 
-- `artifacts\windows\installer\EnfyLiveScreenClient-Setup-1.0.0.exe`
+- `artifacts\windows\installer\EnfySense-Setup-1.0.15.exe`

@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AssemblyName>EnfySense</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.0.15</Version>
   </PropertyGroup>
 
   <ItemGroup>
