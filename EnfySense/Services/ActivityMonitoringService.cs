@@ -7,7 +7,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Automation;
+using Avalonia.Threading;
 using EnfyLiveScreenClient.Services;
+using EnfyLiveScreenClient.Views;
 
 namespace EnfyLiveScreenClient.Services;
 
@@ -22,8 +24,9 @@ public class ActivityMonitoringService : IDisposable
     private DateTime _startTime;
     private DateTime _lastFlushTime = DateTime.UtcNow;
     private bool _isCurrentlyIdle;
+    private bool _isPromptOpen;
     private bool _isEnabled = true;
-    private const int IDLE_THRESHOLD_SECONDS = 300; // 5 minutes
+    private const int IDLE_THRESHOLD_SECONDS = 30; // 30 seconds for testing
 
     public bool IsEnabled 
     { 
@@ -132,6 +135,8 @@ public class ActivityMonitoringService : IDisposable
 
     private void CheckIdleStatus()
     {
+        if (_isPromptOpen) return;
+
         LASTINPUTINFO lii = new LASTINPUTINFO();
         lii.cbSize = (uint)Marshal.SizeOf(lii);
         
@@ -145,16 +150,53 @@ public class ActivityMonitoringService : IDisposable
                 if (!_isCurrentlyIdle)
                 {
                     _isCurrentlyIdle = true;
-                    AppLogger.Log($"User is now IDLE (Idle for {idleSeconds:F0}s)", LogLevel.Info);
-                    _ = _agent.ReportWorkStatusAsync("IDLE");
+                    AppLogger.Log($"User is now IDLE (Idle for {idleSeconds:F0}s). Triggering prompt.", LogLevel.Info);
+                    
+                    // Show prompt on UI thread
+                    Dispatcher.UIThread.InvokeAsync(async () => {
+                        _isPromptOpen = true;
+                        try 
+                        {
+                            var prompt = new InactivityPromptWindow();
+                            // Showing as a top-level window since we don't have an owner handle here easily
+                            // but Topmost=True is set in AXAML
+                            prompt.Show(); 
+                            
+                            // We wait for the window to close
+                            var tcs = new TaskCompletionSource<bool>();
+                            prompt.Closed += (s, e) => tcs.TrySetResult(prompt.IsConfirmed);
+                            
+                            var isConfirmed = await tcs.Task;
+
+                            if (isConfirmed)
+                            {
+                                AppLogger.Log("User confirmed they are working. Resuming.");
+                                _isCurrentlyIdle = false;
+                                _ = _agent.ReportWorkStatusAsync("WORKING");
+                            }
+                            else
+                            {
+                                AppLogger.Log("User did not confirm or timer expired. Switching to BREAK mode.");
+                                _ = _agent.ReportWorkStatusAsync("BREAK");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            AppLogger.Log(ex, "ShowInactivityPrompt");
+                        }
+                        finally
+                        {
+                            _isPromptOpen = false;
+                        }
+                    });
                 }
             }
             else
             {
-                if (_isCurrentlyIdle)
+                if (_isCurrentlyIdle && !_isPromptOpen)
                 {
                     _isCurrentlyIdle = false;
-                    AppLogger.Log("User has returned from IDLE.", LogLevel.Info);
+                    AppLogger.Log("User has returned from IDLE naturally.", LogLevel.Info);
                     _ = _agent.ReportWorkStatusAsync("WORKING");
                 }
             }
