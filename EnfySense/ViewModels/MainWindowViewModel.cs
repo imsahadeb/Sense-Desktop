@@ -619,6 +619,22 @@ public partial class MainWindowViewModel : ViewModelBase
                 IsEnabled = IsTrackingActive && !IsPaused
             };
 
+            _activityService.InactivityTimeout += () => Dispatcher.UIThread.Post(() => {
+                if (IsTrackingActive && !IsPaused)
+                {
+                    AppLogger.Log("Inactivity timeout received in ViewModel. Triggering PauseTracking.");
+                    PauseTracking();
+                }
+            });
+
+            _activityService.InactivityResumed += () => Dispatcher.UIThread.Post(() => {
+                if (IsTrackingActive && IsPaused)
+                {
+                    AppLogger.Log("Inactivity resumed received in ViewModel. Triggering PauseTracking to resume.");
+                    PauseTracking();
+                }
+            });
+
             IsConnected = true;
             IsDataInSync = true;
             LastSyncDisplay = DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss");

@@ -28,6 +28,9 @@ public class ActivityMonitoringService : IDisposable
     private bool _isEnabled = true;
     private const int IDLE_THRESHOLD_SECONDS = 30; // 30 seconds for testing
 
+    public event Action? InactivityTimeout;
+    public event Action? InactivityResumed;
+
     public bool IsEnabled 
     { 
         get => _isEnabled; 
@@ -145,24 +148,29 @@ public class ActivityMonitoringService : IDisposable
             uint idleTimeMs = (uint)Environment.TickCount - lii.dwTime;
             double idleSeconds = idleTimeMs / 1000.0;
 
+            // Log every 10 seconds of idle time for debugging
+            if ((int)idleSeconds % 10 == 0 && idleSeconds > 0)
+            {
+                AppLogger.Log($"Idle check: {idleSeconds:F0}s / {IDLE_THRESHOLD_SECONDS}s", LogLevel.Debug);
+            }
+
             if (idleSeconds >= IDLE_THRESHOLD_SECONDS)
             {
                 if (!_isCurrentlyIdle)
                 {
                     _isCurrentlyIdle = true;
-                    AppLogger.Log($"User is now IDLE (Idle for {idleSeconds:F0}s). Triggering prompt.", LogLevel.Info);
+                    AppLogger.Log($"THRESHOLD HIT: User is now IDLE (Idle for {idleSeconds:F0}s). Triggering prompt.", LogLevel.Info);
                     
                     // Show prompt on UI thread
                     Dispatcher.UIThread.InvokeAsync(async () => {
                         _isPromptOpen = true;
                         try 
                         {
+                            AppLogger.Log("Opening InactivityPromptWindow...");
                             var prompt = new InactivityPromptWindow();
-                            // Showing as a top-level window since we don't have an owner handle here easily
-                            // but Topmost=True is set in AXAML
                             prompt.Show(); 
+                            prompt.Activate(); // Force focus
                             
-                            // We wait for the window to close
                             var tcs = new TaskCompletionSource<bool>();
                             prompt.Closed += (s, e) => tcs.TrySetResult(prompt.IsConfirmed);
                             
@@ -172,17 +180,17 @@ public class ActivityMonitoringService : IDisposable
                             {
                                 AppLogger.Log("User confirmed they are working. Resuming.");
                                 _isCurrentlyIdle = false;
-                                _ = _agent.ReportWorkStatusAsync("WORKING");
+                                InactivityResumed?.Invoke();
                             }
                             else
                             {
-                                AppLogger.Log("User did not confirm or timer expired. Switching to BREAK mode.");
-                                _ = _agent.ReportWorkStatusAsync("BREAK");
+                                AppLogger.Log("User did not confirm. Switching to BREAK mode.");
+                                InactivityTimeout?.Invoke();
                             }
                         }
                         catch (Exception ex)
                         {
-                            AppLogger.Log(ex, "ShowInactivityPrompt");
+                            AppLogger.Log(ex, "ShowInactivityPrompt Exception");
                         }
                         finally
                         {
