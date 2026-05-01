@@ -1,8 +1,10 @@
+using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EnfyLiveScreenClient.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,6 +22,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private DispatcherTimer? _uiTimer;
     private DateTime? _trackingStartedAt;
     private TimeSpan _workTodayAccumulated = TimeSpan.Zero;
+    private TimeSpan _overtimeTodayAccumulated = TimeSpan.Zero;
     private TimeSpan _breakTodayAccumulated = TimeSpan.Zero;
     private bool _hasInitialStatsSync = false;
     private int _heartbeatTickCounter = 0;
@@ -63,25 +66,43 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _statusMessage = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnect))]
+    [NotifyPropertyChangedFor(nameof(CanDisconnect))]
     private bool _isConnected;
 
     [ObservableProperty]
     private bool _autoConnect;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanLogin))]
+    [NotifyPropertyChangedFor(nameof(CanLogout))]
+    [NotifyPropertyChangedFor(nameof(CanConnect))]
     private bool _isAuthenticated;
 
     [ObservableProperty]
     private bool _isMaintenanceActive;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanLogin))]
+    [NotifyPropertyChangedFor(nameof(CanLogout))]
+    [NotifyPropertyChangedFor(nameof(CanConnect))]
+    [NotifyPropertyChangedFor(nameof(CanDisconnect))]
     private bool _isBusy;
+
+    [ObservableProperty]
+    private bool _isOverlayVisible;
 
     [ObservableProperty]
     private string _workTodayDisplay = "0h 0m 0s";
 
     [ObservableProperty]
+    private string _overtimeTodayDisplay = "0h 0m 0s";
+
+    [ObservableProperty]
     private string _breakTodayDisplay = "0h 0m 0s";
+
+    [ObservableProperty]
+    private string _timeRemainingToClose = "";
 
     [ObservableProperty]
     private string _orgTimeDisplay = "--:-- --";
@@ -93,15 +114,51 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _orgNameDisplay = "enfycon inc.";
 
     [ObservableProperty]
+    private bool _isWidgetActive = false;
+
+    [RelayCommand]
+    public void ExpandToFullView()
+    {
+        IsWidgetActive = false;
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            if (desktop.MainWindow != null) { desktop.MainWindow.WindowState = Avalonia.Controls.WindowState.Normal; desktop.MainWindow.Show(); }
+            desktop.MainWindow?.Activate();
+        }
+    }
+
+    [RelayCommand]
+    public void ShowWidget()
+    {
+        IsWidgetActive = true;
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.MainWindow?.Hide();
+        }
+    }
+
+    [RelayCommand]
+    private void UnlockAdmin()
+    {
+        _ = UnlockAdminAsync();
+    }
+
+    [ObservableProperty]
     private string _lastSyncDisplay = "Never synced";
 
     [ObservableProperty]
     private bool _isDataInSync = false;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTrackingStopped))]
+    [NotifyPropertyChangedFor(nameof(CanShowPause))]
+    [NotifyPropertyChangedFor(nameof(CanShowStart))]
     private bool _isTrackingActive = false;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotPaused))]
+    [NotifyPropertyChangedFor(nameof(CanShowPause))]
+    [NotifyPropertyChangedFor(nameof(CanShowStart))]
     private bool _isPaused = false;
 
     [ObservableProperty]
@@ -112,6 +169,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _appVersion = "1.0.15";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsOverlayActive))]
+    private bool _showFinishConfirmation = false;
+
+    public bool IsOverlayActive => ShowFinishConfirmation;
 
     public bool IsTrackingStopped => !IsTrackingActive;
     public bool IsNotPaused => !IsPaused;
@@ -135,11 +198,13 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel()
     {
         _config = AppConfig.Load();
-        BackendUrl = "http://192.168.1.9:3000";
-        SsoRedirectUri = "http://localhost:3001/callback";
+        BackendUrl = _config.BackendUrl;
+        SsoRedirectUri = _config.SsoRedirectUri;
         DeviceName = string.IsNullOrWhiteSpace(_config.DeviceNameOverride)
             ? Environment.MachineName
             : _config.DeviceNameOverride;
+        
+        DeviceId = new LiveStreamAgent(BackendUrl, DeviceName).DeviceId;
         AutoConnect = _config.AutoConnect;
 
         if (AutoConnect)
@@ -147,12 +212,18 @@ public partial class MainWindowViewModel : ViewModelBase
             StatusMessage = "Auto-connect is enabled. Sign in with Microsoft to start the agent.";
         }
 
-        SeedMockActivityData();
+        if (IsConnected)
+        {
+            _ = FetchActivityHistoryAsync();
+        }
+
         InitializeUiTimer();
         InitializeUpdateService();
 
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
         AppVersion = version?.ToString(3) ?? "1.0.0";
+
+        _ = TryAutoLoginAsync();
     }
 
     private void InitializeUpdateService()
@@ -162,14 +233,12 @@ public partial class MainWindowViewModel : ViewModelBase
             IsUpdateAvailable = true;
         });
         
-        // Initial check after 5 seconds
         _ = Task.Run(async () =>
         {
             await Task.Delay(5000);
             await _updateService.CheckForUpdatesAsync();
         });
 
-        // Periodic check every 4 hours
         _updateTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromHours(4)
@@ -178,30 +247,125 @@ public partial class MainWindowViewModel : ViewModelBase
         _updateTimer.Start();
     }
 
-    private void SeedMockActivityData()
+    private async Task FetchTodayStatsAsync()
     {
-        DailyActivityItems.Clear();
-        var random = new Random();
-        for (int i = 0; i < 30; i++)
+        if (string.IsNullOrEmpty(DeviceId) || !IsConnected || string.IsNullOrEmpty(BackendUrl) || _hasInitialStatsSync)
         {
-            var date = DateTime.Today.AddDays(-29 + i);
-            double hours = 0;
-            if (i > 25) hours = random.NextDouble() * 8 + 2; 
-            
-            DailyActivityItems.Add(new ActivityBarItem
-            {
-                Day = date.Day.ToString(),
-                Height = (int)(hours * 15),
-                Tooltip = $"{date:MMM dd}: {hours:F1} hrs"
-            });
+            return;
         }
+
+        try
+        {
+            string url = $"{BackendUrl}/Employee_Monitor/devices/{DeviceId}/stats/today?userName={_authSession?.User.Email}";
+            AppLogger.Log($"FetchTodayStatsAsync: fetching from {url}", LogLevel.Debug);
+            
+            var stats = await _authApiClient.GetAsync<TodayStatsResponse>(
+                url,
+                _authSession?.AccessToken);
+
+            if (stats != null)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _workTodayAccumulated = TimeSpan.FromSeconds(stats.WorkTimeSeconds);
+                    _overtimeTodayAccumulated = TimeSpan.FromSeconds(stats.OvertimeSeconds);
+                    _breakTodayAccumulated = TimeSpan.FromSeconds(stats.BreakTimeSeconds);
+                    _hasInitialStatsSync = true;
+                    
+                    AppLogger.Log($"FetchTodayStatsAsync: Success. Work={_workTodayAccumulated}, Overtime={_overtimeTodayAccumulated}, Break={_breakTodayAccumulated}", LogLevel.Info);
+                    
+                    StatusMessage = "Today's stats synchronized.";
+                    IsDataInSync = true;
+                    LastSyncDisplay = DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss");
+                    UpdateDashboardTick(); 
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Failed to fetch today's stats: {ex.Message}");
+        }
+    }
+
+    public class TodayStatsResponse
+    {
+        public int WorkTimeSeconds { get; set; }
+        public int OvertimeSeconds { get; set; }
+        public int BreakTimeSeconds { get; set; }
+    }
+
+    private async Task FetchActivityHistoryAsync()
+    {
+        if (string.IsNullOrEmpty(DeviceId) || !IsConnected || string.IsNullOrEmpty(BackendUrl))
+        {
+            return;
+        }
+
+        try
+        {
+            string url = $"{BackendUrl}/Employee_Monitor/devices/{DeviceId}/stats/history";
+            var history = await _authApiClient.GetAsync<List<ActivityHistoryResponse>>(
+                url,
+                _authSession?.AccessToken);
+
+            if (history != null)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    DailyActivityItems.Clear();
+                    double totalMax = history.Any() ? history.Max(h => h.WorkTimeSeconds + h.OvertimeSeconds + h.BreakTimeSeconds) : 0;
+                    if (totalMax < 8 * 3600) totalMax = 8 * 3600; 
+
+                    double scaleFactor = 160.0 / totalMax;
+
+                    foreach (var item in history)
+                    {
+                        DailyActivityItems.Add(new ActivityBarItem
+                        {
+                            Day = item.Day.ToString(),
+                            WorkHeight = item.WorkTimeSeconds * scaleFactor,
+                            OvertimeHeight = item.OvertimeSeconds * scaleFactor,
+                            BreakHeight = item.BreakTimeSeconds * scaleFactor,
+                            Tooltip = $"{DateTime.Parse(item.Date):MMMM dd, yyyy} (Real Data)\n\n" +
+                                      $"Regular Work: {FormatSimpleTime(item.WorkTimeSeconds)}\n" +
+                                      $"Overtime:     {FormatSimpleTime(item.OvertimeSeconds)}\n" +
+                                      $"Break Time:   {FormatSimpleTime(item.BreakTimeSeconds)}"
+                        });
+                    }
+                    StatusMessage = "Activity history synchronized.";
+                    LastSyncDisplay = DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss");
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Failed to fetch activity history: {ex.Message}");
+            StatusMessage = "History sync failed. Showing offline data.";
+        }
+    }
+
+    private string FormatSimpleTime(double seconds)
+    {
+        var ts = TimeSpan.FromSeconds(seconds);
+        return $"{(int)ts.TotalHours}h {ts.Minutes}m";
     }
 
     public class ActivityBarItem
     {
         public string Day { get; set; } = "";
-        public int Height { get; set; }
+        public double WorkHeight { get; set; }
+        public double OvertimeHeight { get; set; }
+        public double BreakHeight { get; set; }
         public string Tooltip { get; set; } = "";
+    }
+
+    public class ActivityHistoryResponse
+    {
+        public string Date { get; set; } = "";
+        public int Day { get; set; }
+        public double WorkTimeSeconds { get; set; }
+        public double OvertimeSeconds { get; set; }
+        public double BreakTimeSeconds { get; set; }
     }
 
     private void InitializeUiTimer()
@@ -226,6 +390,7 @@ public partial class MainWindowViewModel : ViewModelBase
             AppLogger.Log($"Day changed from {_lastCheckedDate:yyyy-MM-dd} to {easternTime.Date:yyyy-MM-dd} (Eastern). Resetting daily counters.", LogLevel.Info);
             _lastCheckedDate = easternTime.Date;
             _workTodayAccumulated = TimeSpan.Zero;
+            _overtimeTodayAccumulated = TimeSpan.Zero;
             _breakTodayAccumulated = TimeSpan.Zero;
             if (IsTrackingActive)
             {
@@ -233,9 +398,10 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
 
-        OrgTimeDisplay = easternTime.ToString("hh:mm tt");
+        OrgTimeDisplay = easternTime.ToString("hh:mm:ss tt");
         
         TimeSpan totalWork = _workTodayAccumulated;
+        TimeSpan totalOvertime = _overtimeTodayAccumulated;
         TimeSpan totalBreak = _breakTodayAccumulated;
 
         if (IsTrackingActive && _trackingStartedAt.HasValue)
@@ -247,20 +413,49 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else
             {
-                totalWork += currentSession;
+                int utcHour = DateTime.UtcNow.Hour;
+                if (utcHour >= 14 && utcHour < 23)
+                {
+                    totalWork += currentSession;
+                }
+                else
+                {
+                    totalOvertime += currentSession;
+                }
             }
         }
         
         WorkTodayDisplay = FormatTimeSpan(totalWork);
+        OvertimeTodayDisplay = FormatTimeSpan(totalOvertime);
         BreakTodayDisplay = FormatTimeSpan(totalBreak);
+
+        var nowUtc = DateTime.UtcNow;
+        var shiftEndUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 23, 0, 0, DateTimeKind.Utc);
+        
+        if (nowUtc > shiftEndUtc)
+        {
+            shiftEndUtc = shiftEndUtc.AddDays(1);
+        }
+
+        var remaining = shiftEndUtc - nowUtc;
+        int currentUtcHour = nowUtc.Hour;
+        if (currentUtcHour >= 14 && currentUtcHour < 23)
+        {
+            TimeRemainingToClose = $"{remaining.Hours}h {remaining.Minutes}m {remaining.Seconds}s remaining";
+        }
+        else
+        {
+            TimeRemainingToClose = "Shift Closed";
+        }
 
         if (IsConnected && _agent != null)
         {
             _heartbeatTickCounter++;
-            if (_heartbeatTickCounter >= 10) // Every 10 seconds
+            if (_heartbeatTickCounter >= 10)
             {
                 _heartbeatTickCounter = 0;
-                _ = _agent.SendHeartbeatAsync((int)totalWork.TotalSeconds, (int)totalBreak.TotalSeconds);
+                _ = _agent.SendHeartbeatAsync((int)totalWork.TotalSeconds, (int)totalOvertime.TotalSeconds, (int)totalBreak.TotalSeconds);
+                _ = FetchActivityHistoryAsync();
             }
         }
     }
@@ -271,13 +466,75 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task ManualCheckForUpdates()
+    {
+        StatusMessage = "Checking for updates...";
+        await _updateService.CheckForUpdatesAsync();
+        if (!IsUpdateAvailable)
+        {
+            StatusMessage = "You are using the latest version.";
+        }
+    }
+
+    [RelayCommand]
+    private void SaveSettings()
+    {
+        _config.Save();
+        StatusMessage = "Settings saved successfully.";
+    }
+
+    [RelayCommand]
+    private async Task Logout()
+    {
+        try
+        {
+            await Disconnect();
+            IsAuthenticated = false;
+            IsAdminMode = false;
+            ShowFinishConfirmation = false;
+            IsMaintenanceActive = false;
+            _hasInitialStatsSync = false;
+            
+            CurrentUser = "Not signed in";
+            _authSession = null;
+            _config.LastSession = null;
+            _config.Save();
+            AuthStatus = "Signed out. Microsoft account required.";
+            StatusMessage = "You have been signed out.";
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Logout failed: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void ExitApp()
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.Shutdown();
+        }
+    }
+
+    [RelayCommand]
+    private void LockAdmin()
+    {
+        IsAdminMode = false;
+        _adminLockTimer?.Stop();
+        StatusMessage = "Admin mode locked.";
+    }
+
+    [RelayCommand]
+    private void ApplyUpdate()
+    {
+        _updateService.ApplyUpdatesAndRestart();
+    }
+
+    [RelayCommand]
     private async Task LoginAsync()
     {
-        if (IsBusy)
-        {
-            return;
-        }
-
+        if (IsBusy) return;
         if (string.IsNullOrWhiteSpace(BackendUrl))
         {
             StatusMessage = "Backend URL is required.";
@@ -289,7 +546,7 @@ public partial class MainWindowViewModel : ViewModelBase
             IsBusy = true;
             AuthStatus = "Starting Microsoft sign-in...";
             StatusMessage = "Opening Microsoft sign-in in your browser...";
-            SaveSettings();
+            _config.Save();
 
             _authSession = await _authApiClient.LoginWithMicrosoftAsync(
                 BackendUrl,
@@ -302,7 +559,12 @@ public partial class MainWindowViewModel : ViewModelBase
             AuthStatus = "Signed in with Microsoft";
             StatusMessage = "Microsoft sign-in completed successfully.";
 
-            // Sync dynamic admin secrets from backend
+            if (_config.RememberMe)
+            {
+                _config.LastSession = _authSession;
+                _config.Save();
+            }
+
             _ = SyncAdminSecretsAsync();
 
             if (AutoConnect)
@@ -331,14 +593,11 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        if (IsConnected)
-        {
-            return;
-        }
+        if (IsConnected) return;
 
         try
         {
-            SaveSettings();
+            _config.Save();
             StatusMessage = "Connecting to tracker gateway...";
 
             _agent = new LiveStreamAgent(BackendUrl, DeviceName, _authSession?.User.Email ?? "");
@@ -348,27 +607,39 @@ public partial class MainWindowViewModel : ViewModelBase
             DeviceId = _agent.DeviceId;
             DeviceName = _agent.DeviceName;
 
+            PolicyManager.Instance.PolicyUpdated += HandlePolicyUpdated;
+
             await _agent.StartAsync();
             
-             _backgroundService = new BackgroundCaptureService(_agent);
+            _backgroundService = new BackgroundCaptureService(_agent);
             _backgroundService.Start();
             
-            _activityService = new ActivityMonitoringService(_agent);
-
-            PolicyManager.Instance.PolicyUpdated += HandlePolicyUpdated;
+            _activityService = new ActivityMonitoringService(_agent)
+            {
+                IsEnabled = IsTrackingActive && !IsPaused
+            };
 
             IsConnected = true;
             IsDataInSync = true;
             LastSyncDisplay = DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss");
             StatusMessage = "Connected. Monitoring active.";
+            
+            _ = FetchTodayStatsAsync();
+            _ = FetchActivityHistoryAsync();
 
             if (IsTrackingActive)
             {
-                _ = _agent.ReportWorkStatusAsync(IsPaused ? "BREAK" : "WORKING");
+                _ = _agent.ReportWorkStatusAsync(IsPaused ? "BREAK" : "WORKING",
+                                             (int)_workTodayAccumulated.TotalSeconds,
+                                             (int)_overtimeTodayAccumulated.TotalSeconds,
+                                             (int)_breakTodayAccumulated.TotalSeconds);
             }
             else
             {
-                _ = _agent.ReportWorkStatusAsync("STOPPED");
+                _ = _agent.ReportWorkStatusAsync("IDLE",
+                                             (int)_workTodayAccumulated.TotalSeconds,
+                                             (int)_overtimeTodayAccumulated.TotalSeconds,
+                                             (int)_breakTodayAccumulated.TotalSeconds);
             }
         }
         catch (Exception ex)
@@ -380,7 +651,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task DisconnectAsync()
+    private async Task Disconnect()
     {
         if (_agent != null)
         {
@@ -393,102 +664,58 @@ public partial class MainWindowViewModel : ViewModelBase
                 _backgroundService.Stop();
                 _backgroundService.Dispose();
                 _backgroundService = null;
-                PolicyManager.Instance.PolicyUpdated -= HandlePolicyUpdated;
             }
-
-            if (_activityService != null)
-            {
-                _activityService.Dispose();
-                _activityService = null;
-            }
+            PolicyManager.Instance.PolicyUpdated -= HandlePolicyUpdated;
+            IsConnected = false;
+            StatusMessage = "Disconnected from tracker gateway.";
         }
-
-        IsConnected = false;
-        IsTrackingActive = false;
-        TrackingStatusText = "Tracking Stopped";
-        TrackingStatusDetail = "Work time is not being tracked and no data is being collected.";
-        ConnectionStatus = "Disconnected";
-        StreamStatus = "Idle";
-        StatusMessage = "Disconnected.";
-        _hasInitialStatsSync = false;
     }
 
     [RelayCommand]
-    private Task StartTrackingAsync()
+    private void StartTracking()
     {
-        if (IsTrackingActive && !IsPaused) return Task.CompletedTask;
-        
-        if (IsPaused)
-        {
-            // Resuming from pause
-            if (_trackingStartedAt.HasValue)
-            {
-                _breakTodayAccumulated += DateTime.UtcNow - _trackingStartedAt.Value;
-            }
-            IsPaused = false;
-        }
-        else
-        {
-            // Initial start
-            IsTrackingActive = true;
-        }
-
+        IsTrackingActive = true;
+        IsPaused = false;
         _trackingStartedAt = DateTime.UtcNow;
-        TrackingStatusText = "Tracking Active";
-        TrackingStatusDetail = "Your work time is currently being recorded.";
-        StatusMessage = "Work tracking started.";
-
-        if (_activityService != null) _activityService.IsEnabled = true;
+        TrackingStatusText = "Working";
+        TrackingStatusDetail = "Work time is being tracked and desktop captures are active.";
+        
+        if (_activityService != null)
+        {
+            _activityService.IsEnabled = true;
+        }
 
         if (_agent != null)
         {
-            // Update dashboard immediately with latest counts
-            _ = _agent.SendHeartbeatAsync((int)_workTodayAccumulated.TotalSeconds, (int)_breakTodayAccumulated.TotalSeconds);
-            _ = _agent.ReportWorkStatusAsync("WORKING");
+            _ = _agent.ReportWorkStatusAsync("WORKING", 
+                (int)_workTodayAccumulated.TotalSeconds,
+                (int)_overtimeTodayAccumulated.TotalSeconds,
+                (int)_breakTodayAccumulated.TotalSeconds);
         }
-
-        return Task.CompletedTask;
     }
 
     [RelayCommand]
-    private Task PauseTrackingAsync()
+    private void StopTracking()
     {
-        if (!IsTrackingActive || IsPaused) return Task.CompletedTask;
-
         if (_trackingStartedAt.HasValue)
         {
-            _workTodayAccumulated += DateTime.UtcNow - _trackingStartedAt.Value;
-        }
-
-        IsPaused = true;
-        _trackingStartedAt = DateTime.UtcNow; // Now tracking break time
-        TrackingStatusText = "On a Break";
-        TrackingStatusDetail = "You are currently on a break. Cumulative break time is being recorded.";
-        StatusMessage = "Break mode active.";
-
-        if (_activityService != null) _activityService.IsEnabled = false;
-
-        if (_agent != null)
-        {
-            // Update dashboard immediately with latest counts
-            _ = _agent.SendHeartbeatAsync((int)_workTodayAccumulated.TotalSeconds, (int)_breakTodayAccumulated.TotalSeconds);
-            _ = _agent.ReportWorkStatusAsync("BREAK");
-        }
-
-        return Task.CompletedTask;
-    }
-
-    [RelayCommand]
-    private Task StopTrackingAsync()
-    {
-        if (!IsTrackingActive) return Task.CompletedTask;
-
-        if (_trackingStartedAt.HasValue)
-        {
+            var session = DateTime.UtcNow - _trackingStartedAt.Value;
             if (IsPaused)
-                _breakTodayAccumulated += DateTime.UtcNow - _trackingStartedAt.Value;
+            {
+                _breakTodayAccumulated += session;
+            }
             else
-                _workTodayAccumulated += DateTime.UtcNow - _trackingStartedAt.Value;
+            {
+                int utcHour = DateTime.UtcNow.Hour;
+                if (utcHour >= 14 && utcHour < 23)
+                {
+                    _workTodayAccumulated += session;
+                }
+                else
+                {
+                    _overtimeTodayAccumulated += session;
+                }
+            }
         }
 
         IsTrackingActive = false;
@@ -496,218 +723,176 @@ public partial class MainWindowViewModel : ViewModelBase
         _trackingStartedAt = null;
         TrackingStatusText = "Tracking Stopped";
         TrackingStatusDetail = "Work time is not being tracked and no data is being collected.";
-        StatusMessage = "Work tracking stopped.";
-
-        if (_activityService != null) _activityService.IsEnabled = false;
+        
+        if (_activityService != null)
+        {
+            _activityService.IsEnabled = false;
+        }
 
         if (_agent != null)
         {
-            // Update dashboard immediately with latest counts
-            _ = _agent.SendHeartbeatAsync((int)_workTodayAccumulated.TotalSeconds, (int)_breakTodayAccumulated.TotalSeconds);
-            _ = _agent.ReportWorkStatusAsync("STOPPED");
-        }
-
-        return Task.CompletedTask;
-    }
-
-    [RelayCommand]
-    private async Task LogoutAsync()
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        try
-        {
-            IsBusy = true;
-            StatusMessage = "Signing out...";
-
-            if (IsConnected)
-            {
-                await DisconnectAsync();
-            }
-
-            if (_authSession != null)
-            {
-                await _authApiClient.LogoutAsync(BackendUrl, _authSession.RefreshToken);
-            }
-
-            ClearAuthState();
-            StatusMessage = "Signed out.";
-        }
-        catch (Exception ex)
-        {
-            AppLogger.Log($"Logout warning: {ex}");
-            ClearAuthState();
-            StatusMessage = $"Signed out locally. Backend logout warning: {ex.Message}";
-        }
-        finally
-        {
-            IsBusy = false;
+            _ = _agent.ReportWorkStatusAsync("STOPPED",
+                (int)_workTodayAccumulated.TotalSeconds,
+                (int)_overtimeTodayAccumulated.TotalSeconds,
+                (int)_breakTodayAccumulated.TotalSeconds);
         }
     }
 
     [RelayCommand]
-    private void SaveSettings()
+    private void PauseTracking()
     {
-        _config.BackendUrl = BackendUrl.Trim();
-        _config.SsoRedirectUri = SsoRedirectUri.Trim();
-        _config.DeviceNameOverride = DeviceName.Trim();
-        _config.AutoConnect = AutoConnect;
-        _config.Save();
+        if (!IsTrackingActive) return;
+
+        if (_trackingStartedAt.HasValue)
+        {
+            var session = DateTime.UtcNow - _trackingStartedAt.Value;
+            if (IsPaused)
+            {
+                _breakTodayAccumulated += session;
+            }
+            else
+            {
+                int utcHour = DateTime.UtcNow.Hour;
+                if (utcHour >= 14 && utcHour < 23)
+                {
+                    _workTodayAccumulated += session;
+                }
+                else
+                {
+                    _overtimeTodayAccumulated += session;
+                }
+            }
+        }
+
+        IsPaused = !IsPaused;
+        _trackingStartedAt = DateTime.UtcNow;
+
+        if (IsPaused)
+        {
+            TrackingStatusText = "On Break";
+            TrackingStatusDetail = "Monitoring is active but work time is not being counted.";
+        }
+        else
+        {
+            TrackingStatusText = "Working";
+            TrackingStatusDetail = "Work time is being tracked and desktop captures are active.";
+        }
+
+        if (_activityService != null)
+        {
+            _activityService.IsEnabled = !IsPaused;
+        }
+
+        if (_agent != null)
+        {
+            _ = _agent.ReportWorkStatusAsync(IsPaused ? "BREAK" : "WORKING",
+                (int)_workTodayAccumulated.TotalSeconds,
+                (int)_overtimeTodayAccumulated.TotalSeconds,
+                (int)_breakTodayAccumulated.TotalSeconds);
+        }
     }
 
     [RelayCommand]
-    private void ApplyUpdate()
+    private void RequestFinishWork()
     {
-        _updateService.ApplyUpdatesAndRestart();
+        ShowFinishConfirmation = true;
     }
 
     [RelayCommand]
-    private async Task ManualCheckForUpdatesAsync()
+    private void ConfirmFinish()
     {
-        if (IsBusy) return;
-
-        try
-        {
-            IsBusy = true;
-            StatusMessage = "Checking for updates...";
-            await _updateService.CheckForUpdatesAsync();
-            
-            if (!IsUpdateAvailable)
-            {
-                StatusMessage = "You are already on the latest version.";
-            }
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = "Failed to check for updates.";
-            AppLogger.Log(ex, "Manual update check failed");
-        }
-        finally
-        {
-            IsBusy = false;
-        }
+        ShowFinishConfirmation = false;
+        StopTracking();
     }
 
-    private void ClearAuthState()
+    [RelayCommand]
+    private void CancelFinishWork()
     {
-        _authSession = null;
-        IsAuthenticated = false;
-        CurrentUser = "Not signed in";
-        AuthStatus = "Signed out. Microsoft account required.";
+        ShowFinishConfirmation = false;
     }
 
-    private string GetFriendlyErrorMessage(Exception ex)
+    private void StartTrackingInternal()
     {
-        var message = ex.Message;
-        if (!string.IsNullOrWhiteSpace(BackendUrl) &&
-            BackendUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase) &&
-            message.Contains("actively refused", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Backend connection was refused. If the Windows client is running on a different machine, replace localhost with your backend server IP, for example http://192.168.1.9:3000.";
-        }
-
-        return message;
-    }
-
-    private void HandleConnectionStatusChanged(string status)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            ConnectionStatus = status;
-            if (!status.StartsWith("Connected", StringComparison.OrdinalIgnoreCase))
-            {
-                IsConnected = false;
-            }
-        });
-    }
-
-    private void HandleStreamStatusChanged(string status)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            StreamStatus = status;
-            StatusMessage = status;
-        });
+        StartTracking();
     }
 
     private void HandlePolicyUpdated(TrackedPolicy policy)
     {
-        Dispatcher.UIThread.Post(() =>
+        if (policy.TodayStats != null && !_hasInitialStatsSync)
         {
-            IsMaintenanceActive = policy.MaintenanceMode;
-            if (policy.MaintenanceMode)
+            _workTodayAccumulated = TimeSpan.FromSeconds(policy.TodayStats.WorkTimeSeconds);
+            _overtimeTodayAccumulated = TimeSpan.FromSeconds(policy.TodayStats.OvertimeSeconds);
+            _breakTodayAccumulated = TimeSpan.FromSeconds(policy.TodayStats.BreakTimeSeconds);
+            _hasInitialStatsSync = true;
+            AppLogger.Log($"Policy initial stats sync: Work={_workTodayAccumulated}, Overtime={_overtimeTodayAccumulated}, Break={_breakTodayAccumulated}", LogLevel.Info);
+            UpdateDashboardTick();
+        }
+        
+        IsMaintenanceActive = policy.MaintenanceMode;
+        StatusMessage = policy.MaintenanceMode 
+            ? "Server is currently in maintenance mode." 
+            : "Policy updated.";
+    }
+
+    private async Task UnlockAdminAsync()
+    {
+        try
+        {
+            Window? owner = null;
+            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
             {
-                StatusMessage = "Device is in Maintenance Mode. Tracking is suspended and usage is restricted.";
+                owner = desktop.MainWindow;
             }
 
-            if (policy.TodayStats != null && !_hasInitialStatsSync)
+            var dialog = new EnfyLiveScreenClient.Views.AdminVerificationDialog();
+            var result = await dialog.ShowDialog<bool>(owner!);
+            
+            if (result)
             {
-                _workTodayAccumulated = TimeSpan.FromSeconds(policy.TodayStats.WorkTimeSeconds);
-                _breakTodayAccumulated = TimeSpan.FromSeconds(policy.TodayStats.BreakTimeSeconds);
-                _hasInitialStatsSync = true;
+                IsAdminMode = true;
+                _adminAutoLockSecondsRemaining = DefaultAdminAutoLockSeconds;
+                AdminRemainingDisplay = "01:00";
                 
-                // If tracking is active, reset the session start time to avoid double counting
-                if (IsTrackingActive)
+                _adminLockTimer?.Stop();
+                _adminLockTimer = new DispatcherTimer
                 {
-                    _trackingStartedAt = DateTime.UtcNow;
-                }
+                    Interval = TimeSpan.FromSeconds(1)
+                };
+                _adminLockTimer.Tick += (s, e) =>
+                {
+                    _adminAutoLockSecondsRemaining--;
+                    int mins = _adminAutoLockSecondsRemaining / 60;
+                    int secs = _adminAutoLockSecondsRemaining % 60;
+                    AdminRemainingDisplay = $"{mins:D2}:{secs:D2}";
+                    
+                    if (_adminAutoLockSecondsRemaining <= 0)
+                    {
+                        IsAdminMode = false;
+                        _adminLockTimer.Stop();
+                        StatusMessage = "Admin mode auto-locked.";
+                    }
+                };
+                _adminLockTimer.Start();
                 
-                AppLogger.Log($"Initial stats sync: Work={_workTodayAccumulated}, Break={_breakTodayAccumulated}", LogLevel.Info);
-                IsDataInSync = true;
-                LastSyncDisplay = DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss");
-                UpdateDashboardTick();
+                StatusMessage = "Admin access granted.";
             }
-        });
-    }
-
-    partial void OnIsConnectedChanged(bool value)
-    {
-        OnPropertyChanged(nameof(CanConnect));
-        OnPropertyChanged(nameof(CanDisconnect));
-    }
-
-    partial void OnIsAuthenticatedChanged(bool value)
-    {
-        OnPropertyChanged(nameof(CanLogin));
-        OnPropertyChanged(nameof(CanLogout));
-        OnPropertyChanged(nameof(CanConnect));
-    }
-
-    partial void OnIsBusyChanged(bool value)
-    {
-        OnPropertyChanged(nameof(CanLogin));
-        OnPropertyChanged(nameof(CanLogout));
-        OnPropertyChanged(nameof(CanConnect));
-        OnPropertyChanged(nameof(CanDisconnect));
-    }
-
-    partial void OnIsTrackingActiveChanged(bool value)
-    {
-        OnPropertyChanged(nameof(IsTrackingStopped));
-        OnPropertyChanged(nameof(CanShowPause));
-        OnPropertyChanged(nameof(CanShowStart));
-    }
-
-    partial void OnIsPausedChanged(bool value)
-    {
-        OnPropertyChanged(nameof(IsNotPaused));
-        OnPropertyChanged(nameof(CanShowPause));
-        OnPropertyChanged(nameof(CanShowStart));
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Admin verification error: {ex.Message}");
+        }
     }
 
     private async Task SyncAdminSecretsAsync()
     {
         if (_authSession == null) return;
-
         try
         {
-            var secrets = await _authApiClient.FetchAdminSecretsAsync(BackendUrl, _authSession.AccessToken);
-            if (secrets.Any())
+            string url = $"{BackendUrl}/Employee_Monitor/admin/secrets";
+            var secrets = await _authApiClient.GetAsync<List<AdminSecretDto>>(url, _authSession.AccessToken);
+            if (secrets != null)
             {
-                AdminSecurityService.Instance.UpdateSecrets(secrets);
+                AdminSecurityService.Instance.UpdateSecrets(secrets.Select(s => s.Secret).ToList());
             }
         }
         catch (Exception ex)
@@ -716,69 +901,83 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
-    private async Task UnlockAdminAsync()
+    private class AdminSecretDto
     {
-        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop &&
-            desktop.MainWindow is Views.MainWindow mainWindow)
+        public string Secret { get; set; } = "";
+    }
+
+    private void HandleConnectionStatusChanged(string status)
+    {
+        Dispatcher.UIThread.Post(() => ConnectionStatus = status);
+    }
+
+    private void HandleStreamStatusChanged(string status)
+    {
+        Dispatcher.UIThread.Post(() => StreamStatus = status);
+    }
+
+    private string GetFriendlyErrorMessage(Exception ex)
+    {
+        if (ex.Message.Contains("401")) return "Unauthorized. Please sign in again.";
+        if (ex.Message.Contains("403")) return "Access denied. Admin role may be required.";
+        if (ex.Message.Contains("Failed to connect")) return "Cannot reach the server. Check your internet and Backend URL.";
+        return ex.Message;
+    }
+
+    private async Task TryAutoLoginAsync()
+    {
+        if (_config.LastSession == null || !_config.RememberMe)
         {
-            var result = await mainWindow.VerifyAdminAsync();
-            if (result)
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            AuthStatus = "Restoring session...";
+            StatusMessage = "Restoring your Microsoft sign-in session...";
+            
+            var newSession = await _authApiClient.RefreshTokenAsync(
+                BackendUrl,
+                _config.LastSession.RefreshToken);
+
+            if (newSession.User == null)
             {
-                IsAdminMode = true;
-                StatusMessage = "Admin Mode Unlocked. Maintenance active for 30 minutes.";
-                
-                // Unhide from Control Panel for maintenance
-                LockdownService.Instance.DisableStealthMode();
-                
-                StartAdminLockTimer();
+                throw new InvalidOperationException("Restored session is missing user profile data.");
+            }
+
+            _authSession = newSession;
+            CurrentUser = _authSession.User.DisplayName;
+            AuthStatus = "Signed in (Session Restored)";
+            StatusMessage = "Session restored successfully.";
+            IsAuthenticated = true;
+
+            if (_config.RememberMe)
+            {
+                _config.LastSession = _authSession;
+                _config.Save();
+            }
+
+            _ = SyncAdminSecretsAsync();
+
+            if (AutoConnect)
+            {
+                await ConnectAsync();
             }
         }
-    }
-
-    [RelayCommand]
-    private void LockAdmin()
-    {
-        IsAdminMode = false;
-        _adminAutoLockSecondsRemaining = 0;
-        _adminLockTimer?.Stop();
-        
-        // Hide again in Control Panel
-        LockdownService.Instance.EnableStealthMode();
-        
-        StatusMessage = "Admin Mode Locked. Device secured.";
-        AppLogger.Log("Admin Mode manually locked.");
-    }
-
-    private void StartAdminLockTimer()
-    {
-        _adminAutoLockSecondsRemaining = DefaultAdminAutoLockSeconds;
-        
-        if (_adminLockTimer == null)
+        catch (Exception ex)
         {
-            _adminLockTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            _adminLockTimer.Tick += (s, e) => {
-                if (_adminAutoLockSecondsRemaining > 0)
-                {
-                    _adminAutoLockSecondsRemaining--;
-                    int mins = _adminAutoLockSecondsRemaining / 60;
-                    int secs = _adminAutoLockSecondsRemaining % 60;
-                    AdminRemainingDisplay = $"{mins:D2}:{secs:D2}";
-                    
-                    if (_adminAutoLockSecondsRemaining == 0)
-                    {
-                        LockAdmin();
-                        AppLogger.Log("Admin Mode auto-locked after timeout.");
-                    }
-                }
-            };
+            AppLogger.Log($"Auto-login failed: {ex.Message}", LogLevel.Warn);
+            IsAuthenticated = false;
+            _authSession = null;
+            _config.LastSession = null;
+            _config.Save();
+            StatusMessage = "Session expired or invalid. Please sign in again.";
         }
-        
-        _adminLockTimer.Start();
-        AppLogger.Log("Admin Mode unlocked. Timer started (30m).");
+        finally
+        {
+            IsBusy = false;
+        }
     }
 }
 
@@ -787,8 +986,8 @@ public class StatusColorConverter : Avalonia.Data.Converters.IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
         if (value is bool isActive && isActive)
-            return Avalonia.Media.Brush.Parse("#10B981"); // Green
-        return Avalonia.Media.Brush.Parse("#64748B"); // Gray
+            return Avalonia.Media.Brush.Parse("#10B981");
+        return Avalonia.Media.Brush.Parse("#64748B");
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)

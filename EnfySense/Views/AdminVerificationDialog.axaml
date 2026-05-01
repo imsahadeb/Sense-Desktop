@@ -2,21 +2,56 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="EnfyLiveScreenClient.Views.AdminVerificationDialog"
         Title="Administrator Verification"
-        Width="400" Height="280"
+        Width="440" Height="300"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
-        Background="#0B1220"
-        SystemDecorations="None"
-        BorderBrush="#1F2937"
-        BorderThickness="1"
-        CornerRadius="12">
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        SystemDecorations="None">
 
-  <Border Padding="30" Background="#111827" CornerRadius="12">
-    <StackPanel Spacing="20">
+  <Window.Styles>
+    <Style Selector="TextBox#CodeInput /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="#0F172A" />
+      <Setter Property="BorderBrush" Value="#334155" />
+      <Setter Property="Transitions">
+        <Transitions>
+          <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="TextBox#CodeInput:focus /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="#0F172A" />
+      <Setter Property="BorderBrush" Value="#6366F1" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
+    <Style Selector="TextBox#CodeInput /template/ TextBlock#PART_Watermark">
+      <Setter Property="Foreground" Value="#475569" />
+      <Setter Property="Opacity" Value="0.6" />
+    </Style>
+
+    <Style Selector="Button.cancel:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#334155" />
+      <Setter Property="TextElement.Foreground" Value="#F8FAFC" />
+    </Style>
+
+    <Style Selector="Button.verify:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#4F46E5" />
+      <Setter Property="TextElement.Foreground" Value="White" />
+    </Style>
+  </Window.Styles>
+
+  <Border Padding="40" 
+          Background="#1E293B" 
+          CornerRadius="24" 
+          BorderBrush="#475569" 
+          BorderThickness="1"
+          BoxShadow="0 20 50 0 #40000000">
+    <StackPanel Spacing="24">
       <StackPanel Spacing="8">
         <TextBlock Text="Administrator Required" 
-                   FontSize="20" 
-                   FontWeight="Bold" 
+                   FontSize="24" 
+                   FontWeight="Black" 
                    Foreground="White" 
                    HorizontalAlignment="Center" />
         <TextBlock Text="Enter the 6-digit code from your Authenticator app to continue." 
@@ -27,45 +62,56 @@
       </StackPanel>
 
       <TextBox Name="CodeInput" 
-               Width="200" 
-               Height="50"
-               FontSize="24"
+               Width="280" 
+               Height="64"
+               FontSize="36"
                FontWeight="Bold"
-               LetterSpacing="8"
+               LetterSpacing="16"
                TextAlignment="Center"
                MaxLength="6"
                Watermark="000000"
-               Foreground="White"
-               Background="#1E293B"
-               BorderBrush="#3B82F6"
+               Foreground="#F8FAFC"
+               Background="#0F172A"
+               BorderBrush="#334155"
+               CornerRadius="12"
                HorizontalAlignment="Center" />
 
       <TextBlock Name="ErrorText" 
                  Text="Invalid code. Please try again." 
-                 Foreground="#EF4444" 
+                 Foreground="#F43F5E" 
                  FontSize="12" 
+                 FontWeight="SemiBold"
                  HorizontalAlignment="Center" 
                  IsVisible="False" />
 
       <Grid ColumnDefinitions="*, *" Margin="0,10,0,0">
-        <Button Grid.Column="0" 
+        <Button Grid.Column="0"
+                Classes="cancel"
                 Content="Cancel" 
                 Click="OnCancelClick"
                 HorizontalAlignment="Stretch"
-                Margin="0,0,5,0"
-                Padding="15,10"
-                Background="#1E293B"
-                Foreground="#94A3B8" />
-        <Button Grid.Column="1" 
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Margin="0,0,10,0"
+                Padding="0,14"
+                Background="#334155"
+                Foreground="#CBD5E1"
+                FontWeight="SemiBold"
+                CornerRadius="12" />
+        <Button Grid.Column="1"
+                Classes="verify"
                 Content="Verify" 
                 Click="OnVerifyClick"
                 IsDefault="True"
                 HorizontalAlignment="Stretch"
-                Margin="5,0,0,0"
-                Padding="15,10"
-                Background="#3B82F6"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Margin="10,0,0,0"
+                Padding="0,14"
+                Background="#6366F1"
                 Foreground="White"
-                FontWeight="Bold" />
+                FontWeight="Bold"
+                CornerRadius="12" />
       </Grid>
     </StackPanel>
   </Border>

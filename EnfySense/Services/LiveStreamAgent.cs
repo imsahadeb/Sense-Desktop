@@ -314,19 +314,24 @@ public sealed class LiveStreamAgent : IDisposable
         }
     }
 
-    public async Task<bool> ReportWorkStatusAsync(string status)
+    public async Task<bool> ReportWorkStatusAsync(string status, int workTime = -1, int overtime = -1, int breakTime = -1)
     {
         if (!_isConnected || _socket == null) return false;
 
         try
         {
             AppLogger.Log($"Reporting work status: {status}", LogLevel.Info);
-            await _socket.EmitAsync("work-status-update", new
+            var payload = new
             {
                 deviceId = _deviceId,
                 status = status, // WORKING, BREAK, STOPPED
-                timestamp = DateTime.UtcNow.ToString("o")
-            });
+                userName = _userName,
+                timestamp = DateTime.UtcNow.ToString("o"),
+                workTimeSeconds = workTime >= 0 ? (int?)workTime : null,
+                overtimeSeconds = overtime >= 0 ? (int?)overtime : null,
+                breakTimeSeconds = breakTime >= 0 ? (int?)breakTime : null
+            };
+            await _socket.EmitAsync("work-status-update", payload);
             return true;
         }
         catch (Exception ex)
@@ -336,7 +341,7 @@ public sealed class LiveStreamAgent : IDisposable
         }
     }
 
-    public async Task<bool> SendHeartbeatAsync(int workTimeSeconds, int breakTimeSeconds)
+    public async Task<bool> SendHeartbeatAsync(int workTimeSeconds, int overtimeSeconds, int breakTimeSeconds)
     {
         if (!_isConnected || _socket == null) return false;
 
@@ -345,7 +350,9 @@ public sealed class LiveStreamAgent : IDisposable
             await _socket.EmitAsync("device-heartbeat", new
             {
                 deviceId = _deviceId,
+                userName = _userName,
                 workTimeSeconds = workTimeSeconds,
+                overtimeSeconds = overtimeSeconds,
                 breakTimeSeconds = breakTimeSeconds
             });
             return true;

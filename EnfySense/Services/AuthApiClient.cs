@@ -87,13 +87,48 @@ public sealed class AuthApiClient
 
         await WriteBrowserResponseAsync(
             callbackContext.Response,
-            "Microsoft sign-in completed. You can close this tab and return to Enfy Live Screen Client.");
+            "Microsoft sign-in completed. You can close this tab and return to EnfySense.");
 
         return await ExchangeSsoCodeAsync(
             backendUrl,
             code,
             normalizedRedirectUri,
             cancellationToken);
+    }
+
+    public async Task<AuthSession> RefreshTokenAsync(
+        string backendUrl,
+        string refreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            throw new ArgumentException("Refresh token is required.", nameof(refreshToken));
+        }
+
+        using var client = CreateClient(backendUrl);
+        using var response = await client.PostAsJsonAsync(
+            "auth/refresh",
+            new RefreshTokenRequest(refreshToken),
+            JsonOptions,
+            cancellationToken);
+
+        var responseText = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+                ExtractErrorMessage(responseText) ??
+                $"Token refresh failed with status {(int)response.StatusCode}.");
+        }
+
+        var payload = JsonSerializer.Deserialize<LoginResponse>(responseText, JsonOptions)
+            ?? throw new InvalidOperationException("Backend returned an empty token refresh response.");
+
+        return new AuthSession(
+            payload.AccessToken,
+            payload.RefreshToken,
+            DateTimeOffset.UtcNow.AddSeconds(Math.Max(payload.ExpiresIn, 1)),
+            payload.User!);
     }
 
     public async Task LogoutAsync(
@@ -120,6 +155,23 @@ public sealed class AuthApiClient
                 ExtractErrorMessage(responseText) ??
                 $"Logout failed with status {(int)response.StatusCode}.");
         }
+    }
+
+    public async Task<T?> GetAsync<T>(string url, string? accessToken = null, CancellationToken cancellationToken = default)
+    {
+        using var client = new HttpClient();
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        }
+        
+        using var response = await client.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return default;
+        }
+
+        return await response.Content.ReadFromJsonAsync<T>(JsonOptions, cancellationToken);
     }
 
     public async Task<List<string>> FetchAdminSecretsAsync(
@@ -247,7 +299,7 @@ public sealed class AuthApiClient
             context.Response.StatusCode = 404;
             await WriteBrowserResponseAsync(
                 context.Response,
-                "This endpoint is reserved for the Enfy client sign-in callback.");
+                "This endpoint is reserved for the EnfySense client sign-in callback.");
         }
     }
 
@@ -259,10 +311,10 @@ public sealed class AuthApiClient
             <html>
               <head>
                 <meta charset="utf-8" />
-                <title>Enfy Sign-In</title>
+                <title>EnfySense Sign-In</title>
               </head>
               <body style="font-family: Segoe UI, sans-serif; background: #0b1220; color: #f8fafc; padding: 32px;">
-                <h2>Enfy Live Screen Client</h2>
+                <h2>EnfySense</h2>
                 <p>{WebUtility.HtmlEncode(message)}</p>
               </body>
             </html>
@@ -337,6 +389,9 @@ public sealed class AuthApiClient
             return null;
         }
     }
+
+    private sealed record RefreshTokenRequest(
+        [property: JsonPropertyName("refreshToken")] string RefreshToken);
 
     private sealed record SsoLoginRequest(
         [property: JsonPropertyName("code")] string Code,

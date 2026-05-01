@@ -1,0 +1,110 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:EnfyLiveScreenClient.ViewModels"
+        x:Class="EnfyLiveScreenClient.Views.TrackerWidget"
+        x:DataType="vm:MainWindowViewModel"
+        Width="240" Height="38"
+        WindowStartupLocation="Manual"
+        SystemDecorations="None"
+        Topmost="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        PointerPressed="OnPointerPressed">
+
+    <Border Background="#F9111827" 
+            CornerRadius="19" 
+            BorderBrush="#4494A3B8" 
+            BorderThickness="1.2"
+            BoxShadow="0 4 16 0 #80000000">
+        <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+            <!-- MOVE HANDLE -->
+            <Border Grid.Column="0" 
+                    Width="32" Height="38" 
+                    Background="Transparent" 
+                    Cursor="SizeAll">
+                <PathIcon Data="{StaticResource text_bullet_list_regular}" 
+                          Width="12" Height="12" 
+                          Foreground="#94A3B8" 
+                          Opacity="0.6" />
+            </Border>
+            
+            <!-- TIME DISPLAY -->
+            <StackPanel Grid.Column="1" 
+                        Orientation="Horizontal" 
+                        VerticalAlignment="Center" 
+                        Spacing="8" 
+                        Margin="2,0,8,0">
+                <Ellipse Width="6" Height="6" 
+                         Fill="#10B981" 
+                         VerticalAlignment="Center" 
+                         IsVisible="{Binding IsTrackingActive}" />
+                <TextBlock Text="{Binding WorkTodayDisplay}" 
+                           FontSize="14" 
+                           FontWeight="Bold" 
+                           Foreground="White" 
+                           VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- ACTIONS -->
+            <StackPanel Grid.Column="2" 
+                        Orientation="Horizontal" 
+                        Spacing="4" 
+                        VerticalAlignment="Center" 
+                        Margin="4,0">
+                <Button Command="{Binding StartTrackingCommand}" 
+                        IsVisible="{Binding CanShowStart}" 
+                        Classes="action-btn"
+                        ToolTip.Tip="Resume">
+                    <PathIcon Data="{StaticResource play_regular}" Width="12" Height="12" Foreground="#10B981" />
+                </Button>
+                <Button Command="{Binding PauseTrackingCommand}" 
+                        IsVisible="{Binding CanShowPause}" 
+                        Classes="action-btn"
+                        ToolTip.Tip="Pause">
+                    <PathIcon Data="{StaticResource pause_regular}" Width="12" Height="12" Foreground="#F59E0B" />
+                </Button>
+                <Button Command="{Binding RequestFinishWorkCommand}" 
+                        IsVisible="{Binding IsTrackingActive}" 
+                        Classes="action-btn"
+                        ToolTip.Tip="Finish">
+                    <PathIcon Data="{StaticResource stop_regular}" Width="12" Height="12" Foreground="#EF4444" />
+                </Button>
+            </StackPanel>
+
+            <!-- EXPAND -->
+            <Button Grid.Column="3" 
+                    Command="{Binding ExpandToFullViewCommand}" 
+                    Classes="expand-btn"
+                    ToolTip.Tip="Open Full View">
+                <PathIcon Data="{StaticResource arrow_maximize_regular}" 
+                          Width="12" Height="12" 
+                          Foreground="#3B82F6" />
+            </Button>
+        </Grid>
+    </Border>
+
+    <Window.Styles>
+        <Style Selector="Button.action-btn">
+            <Setter Property="Background" Value="#1AFFFFFF" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.action-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#33FFFFFF" />
+        </Style>
+        <Style Selector="Button.expand-btn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0,19,19,0" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.expand-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1AFFFFFF" />
+        </Style>
+    </Window.Styles>
+</Window>

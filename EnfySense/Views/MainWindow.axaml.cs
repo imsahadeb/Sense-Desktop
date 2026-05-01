@@ -1,38 +1,74 @@
+using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 
 namespace EnfyLiveScreenClient.Views;
 
 public partial class MainWindow : Window
 {
-    private bool _canClose = false;
+    private bool _isDialogOpen = false;
+
+    private bool _isRealClose = false;
+
+    private TrackerWidget? _widget;
 
     public MainWindow()
     {
         InitializeComponent();
+        
+        DataContextChanged += (s, e) => {
+            if (DataContext is ViewModels.MainWindowViewModel vm) {
+                vm.PropertyChanged += (sender, args) => {
+                    if (args.PropertyName == nameof(ViewModels.MainWindowViewModel.IsWidgetActive)) {
+                        ToggleWidget(vm.IsWidgetActive);
+                    }
+                };
+            }
+        };
+
+        Closing += (s, e) => {
+            if (!_isRealClose)
+            {
+                e.Cancel = true;
+                if (DataContext is ViewModels.MainWindowViewModel vm) {
+                    vm.ShowWidget();
+                }
+            }
+            else {
+                _widget?.Close();
+            }
+        };
+
+        // Show widget when minimized
+        this.PropertyChanged += (s, e) => {
+            if (e.Property == WindowStateProperty) {
+                var state = (WindowState)e.NewValue!;
+                if (state == WindowState.Minimized) {
+                    if (DataContext is ViewModels.MainWindowViewModel vm && !vm.IsWidgetActive) {
+                        vm.ShowWidget();
+                    }
+                }
+            }
+        };
     }
 
-    protected override async void OnClosing(WindowClosingEventArgs e)
+    private void ToggleWidget(bool show) {
+        if (show) {
+            if (_widget == null) {
+                _widget = new TrackerWidget { DataContext = DataContext };
+            }
+            _widget.Show();
+        } else {
+            _widget?.Hide();
+        }
+    }
+
+    public void Shutdown()
     {
-        if (_canClose)
-        {
-            base.OnClosing(e);
-            return;
-        }
-
-        // Always cancel the initial close attempt
-        e.Cancel = true;
-
-        // Show the verification dialog
-        var dialog = new AdminVerificationDialog();
-        var result = await dialog.ShowDialog<bool>(this);
-
-        if (result)
-        {
-            _canClose = true;
-            Close();
-        }
+        _isRealClose = true;
+        Close();
     }
 
     /// <summary>
@@ -40,8 +76,25 @@ public partial class MainWindow : Window
     /// </summary>
     public async Task<bool> VerifyAdminAsync()
     {
-        var dialog = new AdminVerificationDialog();
-        return await dialog.ShowDialog<bool>(this);
+        if (_isDialogOpen)
+        {
+            return false;
+        }
+
+        var vm = DataContext as ViewModels.MainWindowViewModel;
+        if (vm != null) vm.IsOverlayVisible = true;
+
+        _isDialogOpen = true;
+        try
+        {
+            var dialog = new AdminVerificationDialog();
+            return await dialog.ShowDialog<bool>(this);
+        }
+        finally
+        {
+            _isDialogOpen = false;
+            if (vm != null) vm.IsOverlayVisible = false;
+        }
     }
 }
 

@@ -105,8 +105,11 @@ public class ActivityMonitoringService : IDisposable
                 url = GetBrowserUrl(hWnd);
             }
 
-            // Detect change
-            if (appName != _lastApp || title != _lastTitle || (url != null && url != _lastUrl))
+            // Detect change OR periodically record current segment (every 30s) to keep backend in sync
+            bool hasChanged = appName != _lastApp || title != _lastTitle || (url != null && url != _lastUrl);
+            bool isStale = (DateTime.UtcNow - _startTime).TotalSeconds >= 30;
+
+            if (hasChanged || isStale)
             {
                 RecordCurrentActivity();
                 _lastApp = appName;
@@ -152,11 +155,7 @@ public class ActivityMonitoringService : IDisposable
                 {
                     _isCurrentlyIdle = false;
                     AppLogger.Log("User has returned from IDLE.", LogLevel.Info);
-                    // Report active status again. 
-                    // The ViewModel usually handles this but we want the dashboard to update immediately.
-                    // However, we don't know if they were WORKING or BREAK here.
-                    // We'll rely on the next manual session update or we can query the ViewModel (not ideal dependency).
-                    // For now, let's just report "WORKING" if they were active before, or better just let the manual state prevail.
+                    _ = _agent.ReportWorkStatusAsync("WORKING");
                 }
             }
         }

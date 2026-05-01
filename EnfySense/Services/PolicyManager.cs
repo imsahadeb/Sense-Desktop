@@ -12,6 +12,7 @@ public record TrackedPolicyConfig(
 public class TodayStats
 {
     public int WorkTimeSeconds { get; set; }
+    public int OvertimeSeconds { get; set; }
     public int BreakTimeSeconds { get; set; }
 }
 
