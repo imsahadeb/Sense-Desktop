@@ -12,7 +12,7 @@ public partial class MainWindow : Window
 
     private bool _isRealClose = false;
 
-    private TrackerWidget? _widget;
+    private SenseWidget? _widget;
 
     public MainWindow()
     {
@@ -57,7 +57,7 @@ public partial class MainWindow : Window
     private void ToggleWidget(bool show) {
         if (show) {
             if (_widget == null) {
-                _widget = new TrackerWidget { DataContext = DataContext };
+                _widget = new SenseWidget { DataContext = DataContext };
             }
             _widget.Show();
         } else {

@@ -19,7 +19,7 @@
 #endif
 
 ; The TOTP secret used to verify the admin identity for admin unlock and uninstall.
-; This must match the secret configured in the EnfySense backend (tracker.enfysense_admins).
+; This must match the secret configured in the EnfySense backend (sense.enfysense_admins).
 ; To update, replace the value below and rebuild the installer.
 #ifndef AdminTotpSecret
   #define AdminTotpSecret "DMTSDL3Y7XT5M36HQ2ELBSTTQ65SLUTO"
@@ -86,7 +86,7 @@ begin
   // We do NOT attempt to merge the existing file to avoid AnsiString complexity.
   ConfigJson :=
     '{' + #13#10 +
-    '  "BackendUrl": "http://192.168.1.9:3000",' + #13#10 +
+    '  "BackendUrl": "http://192.168.56.1:3000",' + #13#10 +
     '  "AutoConnect": true,' + #13#10 +
     '  "DeviceNameOverride": "",' + #13#10 +
     '  "KeycloakIssuer": "https://auth.enfycon.com/realms/submission_tracker",' + #13#10 +

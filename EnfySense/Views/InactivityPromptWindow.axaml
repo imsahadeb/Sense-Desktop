@@ -2,21 +2,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="EnfyLiveScreenClient.Views.InactivityPromptWindow"
         Title="Inactivity Check"
-        Width="400" Height="280"
-        WindowStartupLocation="CenterScreen"
-        CanResize="False"
-        Background="Transparent"
-        TransparencyLevelHint="Transparent"
-        SystemDecorations="None"
+        WindowState="FullScreen"
+        Background="#E6EF4444" 
         Topmost="True"
         ShowInTaskbar="False">
 
-  <Border Padding="32" 
+  <Border Padding="40" 
           Background="#1E293B" 
           CornerRadius="24" 
-          BorderBrush="#475569" 
-          BorderThickness="1"
-          BoxShadow="0 20 50 0 #40000000">
+          BorderBrush="#EF4444" 
+          BorderThickness="2"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          BoxShadow="0 20 50 0 #80000000">
     <StackPanel Spacing="24" VerticalAlignment="Center">
       <StackPanel Spacing="8">
         <TextBlock Text="Are you still working?" 
@@ -24,9 +22,10 @@
                    FontWeight="Black" 
                    Foreground="White" 
                    HorizontalAlignment="Center" />
-        <TextBlock Text="Inactivity detected for 5 minutes. Please confirm your status." 
+        <TextBlock Name="DescriptionText"
+                   Text="Inactivity detected. Please confirm your status." 
                    Foreground="#94A3B8" 
-                   FontSize="13" 
+                   FontSize="16" 
                    TextAlignment="Center" 
                    TextWrapping="Wrap" />
       </StackPanel>
@@ -34,9 +33,9 @@
       <StackPanel Spacing="4">
         <TextBlock Name="TimerText" 
                    Text="30" 
-                   FontSize="48" 
+                   FontSize="64" 
                    FontWeight="Black" 
-                   Foreground="#6366F1" 
+                   Foreground="#EF4444" 
                    HorizontalAlignment="Center" />
         <TextBlock Text="seconds remaining" 
                    FontSize="11" 
@@ -47,17 +46,17 @@
       </StackPanel>
 
       <Button Name="ConfirmButton"
-              Content="Yes, I am working" 
+              Content="YES, I AM WORKING" 
               Click="OnConfirmClick"
               HorizontalAlignment="Stretch"
               HorizontalContentAlignment="Center"
               VerticalContentAlignment="Center"
-              Padding="0,16"
-              Background="#6366F1"
+              Padding="0,20"
+              Background="#EF4444"
               Foreground="White"
-              FontWeight="Bold"
-              FontSize="15"
-              CornerRadius="12">
+              FontWeight="Black"
+              FontSize="18"
+              CornerRadius="16">
         <Button.Styles>
           <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#4F46E5" />

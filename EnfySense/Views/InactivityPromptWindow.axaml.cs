@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using EnfyLiveScreenClient.Services;
 using System;
 
 namespace EnfyLiveScreenClient.Views;
@@ -22,6 +23,20 @@ public partial class InactivityPromptWindow : Window
         };
         _timer.Tick += OnTimerTick;
         _timer.Start();
+
+        // Set dynamic description text based on policy
+        var threshold = PolicyManager.Instance.CurrentPolicy.IdleThresholdSec;
+        var minutes = threshold / 60;
+        var seconds = threshold % 60;
+        var timeStr = minutes > 0 
+            ? $"{minutes} minute{(minutes > 1 ? "s" : "")}" 
+            : $"{seconds} seconds";
+            
+        var descText = this.FindControl<TextBlock>("DescriptionText");
+        if (descText != null)
+        {
+            descText.Text = $"Inactivity detected for {timeStr}. Please confirm your status.";
+        }
     }
 
     private void OnTimerTick(object? sender, EventArgs e)

@@ -26,7 +26,8 @@ public class ActivityMonitoringService : IDisposable
     private bool _isCurrentlyIdle;
     private bool _isPromptOpen;
     private bool _isEnabled = true;
-    private const int IDLE_THRESHOLD_SECONDS = 30; // 30 seconds for testing
+    
+    // Threshold is now managed by PolicyManager.Instance.CurrentPolicy.Config.IdleThresholdSec
 
     public event Action? InactivityTimeout;
     public event Action? InactivityResumed;
@@ -148,13 +149,15 @@ public class ActivityMonitoringService : IDisposable
             uint idleTimeMs = (uint)Environment.TickCount - lii.dwTime;
             double idleSeconds = idleTimeMs / 1000.0;
 
-            // Log every 10 seconds of idle time for debugging
-            if ((int)idleSeconds % 10 == 0 && idleSeconds > 0)
+            int threshold = PolicyManager.Instance.CurrentPolicy.IdleThresholdSec;
+
+            // Log every 5 seconds of idle time to debug why it might not trigger
+            if ((int)idleSeconds % 5 == 0 && idleSeconds > 0)
             {
-                AppLogger.Log($"Idle check: {idleSeconds:F0}s / {IDLE_THRESHOLD_SECONDS}s", LogLevel.Debug);
+                AppLogger.Log($"[DEBUG] Idle Timer: {idleSeconds:F0}s / Threshold: {threshold}s. PromptOpen: {_isPromptOpen}, CurrentlyIdle: {_isCurrentlyIdle}, Enabled: {_isEnabled}", LogLevel.Debug);
             }
 
-            if (idleSeconds >= IDLE_THRESHOLD_SECONDS)
+            if (idleSeconds >= threshold)
             {
                 if (!_isCurrentlyIdle)
                 {

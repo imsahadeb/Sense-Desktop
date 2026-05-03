@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:EnfyLiveScreenClient.ViewModels"
-        x:Class="EnfyLiveScreenClient.Views.TrackerWidget"
+        x:Class="EnfyLiveScreenClient.Views.SenseWidget"
         x:DataType="vm:MainWindowViewModel"
         Width="240" Height="38"
         WindowStartupLocation="Manual"
@@ -35,10 +35,10 @@
                         Spacing="8" 
                         Margin="2,0,8,0">
                 <Ellipse Width="6" Height="6" 
-                         Fill="#10B981" 
+                         Fill="{Binding WidgetStatusColor}" 
                          VerticalAlignment="Center" 
                          IsVisible="{Binding IsTrackingActive}" />
-                <TextBlock Text="{Binding WorkTodayDisplay}" 
+                <TextBlock Text="{Binding WidgetTimeDisplay}" 
                            FontSize="14" 
                            FontWeight="Bold" 
                            Foreground="White" 

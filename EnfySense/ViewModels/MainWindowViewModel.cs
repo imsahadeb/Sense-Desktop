@@ -102,6 +102,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _breakTodayDisplay = "0h 0m 0s";
 
     [ObservableProperty]
+    private string _widgetTimeDisplay = "0h 0m 0s";
+
+    [ObservableProperty]
+    private string _widgetStatusColor = "#10B981";
+
+    [ObservableProperty]
     private string _timeRemainingToClose = "";
 
     [ObservableProperty]
@@ -256,7 +262,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            string url = $"{BackendUrl}/Employee_Monitor/devices/{DeviceId}/stats/today?userName={_authSession?.User.Email}";
+            string url = $"{BackendUrl}/sense/devices/{DeviceId}/stats/today?userName={_authSession?.User.Email}";
             AppLogger.Log($"FetchTodayStatsAsync: fetching from {url}", LogLevel.Debug);
             
             var stats = await _authApiClient.GetAsync<TodayStatsResponse>(
@@ -303,7 +309,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            string url = $"{BackendUrl}/Employee_Monitor/devices/{DeviceId}/stats/history";
+            string url = $"{BackendUrl}/sense/devices/{DeviceId}/stats/history";
             var history = await _authApiClient.GetAsync<List<ActivityHistoryResponse>>(
                 url,
                 _authSession?.AccessToken);
@@ -403,31 +409,31 @@ public partial class MainWindowViewModel : ViewModelBase
         TimeSpan totalWork = _workTodayAccumulated;
         TimeSpan totalOvertime = _overtimeTodayAccumulated;
         TimeSpan totalBreak = _breakTodayAccumulated;
+        int currentUtcHour = DateTime.UtcNow.Hour;
 
         if (IsTrackingActive && _trackingStartedAt.HasValue)
         {
             var currentSession = DateTime.UtcNow - _trackingStartedAt.Value;
-            if (IsPaused)
-            {
-                totalBreak += currentSession;
-            }
-            else
-            {
-                int utcHour = DateTime.UtcNow.Hour;
-                if (utcHour >= 14 && utcHour < 23)
-                {
-                    totalWork += currentSession;
-                }
-                else
-                {
-                    totalOvertime += currentSession;
-                }
-            }
+            if (IsPaused) totalBreak += currentSession;
+            else if (currentUtcHour >= 14 && currentUtcHour < 23) totalWork += currentSession;
+            else totalOvertime += currentSession;
         }
         
         WorkTodayDisplay = FormatTimeSpan(totalWork);
         OvertimeTodayDisplay = FormatTimeSpan(totalOvertime);
         BreakTodayDisplay = FormatTimeSpan(totalBreak);
+
+        // Update Widget display
+        if (currentUtcHour >= 14 && currentUtcHour < 23)
+        {
+            WidgetTimeDisplay = WorkTodayDisplay;
+            WidgetStatusColor = IsPaused ? "#F59E0B" : "#10B981"; // Yellow if break, Green if work
+        }
+        else
+        {
+            WidgetTimeDisplay = OvertimeTodayDisplay;
+            WidgetStatusColor = IsPaused ? "#F59E0B" : "#EF4444"; // Yellow if break, Red if overtime
+        }
 
         var nowUtc = DateTime.UtcNow;
         var shiftEndUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 23, 0, 0, DateTimeKind.Utc);
@@ -438,7 +444,6 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         var remaining = shiftEndUtc - nowUtc;
-        int currentUtcHour = nowUtc.Hour;
         if (currentUtcHour >= 14 && currentUtcHour < 23)
         {
             TimeRemainingToClose = $"{remaining.Hours}h {remaining.Minutes}m {remaining.Seconds}s remaining";
@@ -598,7 +603,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             _config.Save();
-            StatusMessage = "Connecting to tracker gateway...";
+            StatusMessage = "Connecting to Sense gateway...";
 
             _agent = new LiveStreamAgent(BackendUrl, DeviceName, _authSession?.User.Email ?? "");
             _agent.ConnectionStatusChanged += HandleConnectionStatusChanged;
@@ -683,7 +688,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             PolicyManager.Instance.PolicyUpdated -= HandlePolicyUpdated;
             IsConnected = false;
-            StatusMessage = "Disconnected from tracker gateway.";
+            StatusMessage = "Disconnected from Sense gateway.";
         }
     }
 
@@ -904,7 +909,7 @@ public partial class MainWindowViewModel : ViewModelBase
         if (_authSession == null) return;
         try
         {
-            string url = $"{BackendUrl}/Employee_Monitor/admin/secrets";
+            string url = $"{BackendUrl}/sense/admin/secrets";
             var secrets = await _authApiClient.GetAsync<List<AdminSecretDto>>(url, _authSession.AccessToken);
             if (secrets != null)
             {

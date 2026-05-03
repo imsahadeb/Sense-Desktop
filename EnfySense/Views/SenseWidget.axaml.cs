@@ -5,9 +5,9 @@ using Avalonia.Markup.Xaml;
 
 namespace EnfyLiveScreenClient.Views;
 
-public partial class TrackerWidget : Window
+public partial class SenseWidget : Window
 {
-    public TrackerWidget()
+    public SenseWidget()
     {
         InitializeComponent();
     }

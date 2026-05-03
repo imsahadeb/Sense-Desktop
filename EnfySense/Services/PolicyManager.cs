@@ -3,11 +3,6 @@ using System.Text.Json;
 
 namespace EnfyLiveScreenClient.Services;
 
-public record TrackedPolicyConfig(
-    int ScreenshotIntervalSec,
-    int ScreenshotQuality,
-    int IdleThresholdSec
-);
 
 public class TodayStats
 {
@@ -20,7 +15,11 @@ public class TrackedPolicy
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public TrackedPolicyConfig Config { get; set; } = new(60, 70, 600);
+    
+    public int ScreenshotIntervalSec { get; set; } = 60;
+    public int ScreenshotQuality { get; set; } = 70;
+    public int IdleThresholdSec { get; set; } = 600;
+
     public bool MaintenanceMode { get; set; }
     public TodayStats? TodayStats { get; set; }
 }
@@ -50,7 +49,7 @@ public class PolicyManager
             if (newPolicy != null)
             {
                 _currentPolicy = newPolicy;
-                AppLogger.Log($"Policy updated: {newPolicy.Name} (Interval: {newPolicy.Config.ScreenshotIntervalSec}s)", LogLevel.Info);
+                AppLogger.Log($"Policy updated: {newPolicy.Name} (Interval: {newPolicy.ScreenshotIntervalSec}s)", LogLevel.Info);
                 PolicyUpdated?.Invoke(_currentPolicy);
             }
         }

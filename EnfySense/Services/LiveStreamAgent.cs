@@ -45,7 +45,7 @@ public sealed class LiveStreamAgent : IDisposable
             return;
         }
 
-        _socket = new SocketIOClient.SocketIO($"{_backendUrl}/tracker", new SocketIOOptions
+        _socket = new SocketIOClient.SocketIO($"{_backendUrl}/sense", new SocketIOOptions
         {
             Transport = SocketIOClient.Transport.TransportProtocol.WebSocket,
             Reconnection = true,
@@ -57,12 +57,15 @@ public sealed class LiveStreamAgent : IDisposable
             _isConnected = true;
             SetConnectionStatus($"Connected to {_backendUrl}");
             AppLogger.Log($"Socket connected. Device ID: {_deviceId}, Device Name: {_deviceName}", LogLevel.Info);
+            var sysInfo = GetSystemInfo();
             await _socket.EmitAsync("join", new
             {
                 deviceId = _deviceId,
                 deviceName = _deviceName,
                 userName = _userName,
                 clientType = "agent",
+                osVersion = Environment.OSVersion.ToString(),
+                metadata = sysInfo
             });
 
             // Trigger offline queue processing
@@ -123,7 +126,7 @@ public sealed class LiveStreamAgent : IDisposable
                     AppLogger.Log("Manual capture requested via socket.", LogLevel.Info);
                     var policy = PolicyManager.Instance.CurrentPolicy;
                     // Trigger a high-quality capture
-                    var bytes = _captureService.CaptureScreen(0, 0, policy.Config.ScreenshotQuality);
+                    var bytes = _captureService.CaptureScreen(0, 0, policy.ScreenshotQuality);
                     var metadata = new
                     {
                         capturedAt = DateTime.UtcNow.ToString("o"),
@@ -388,6 +391,136 @@ public sealed class LiveStreamAgent : IDisposable
         }
 
         return $"FALLBACK-{Environment.MachineName}";
+    }
+
+    private static object GetSystemInfo()
+    {
+        try
+        {
+            var ips = new System.Collections.Generic.List<string>();
+            var macs = new System.Collections.Generic.List<string>();
+            var ssid = "Wired/Unknown";
+
+            foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ni.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up && 
+                    ni.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback)
+                {
+                    var props = ni.GetIPProperties();
+                    foreach (var ip in props.UnicastAddresses)
+                    {
+                        if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        {
+                            ips.Add(ip.Address.ToString());
+                        }
+                    }
+                    macs.Add(ni.GetPhysicalAddress().ToString());
+                }
+            }
+
+            try {
+                // Get WiFi SSID
+                var process = new System.Diagnostics.Process {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo {
+                        FileName = "netsh",
+                        Arguments = "wlan show interfaces",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true
+                    }
+                };
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+
+                var lines = output.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines) {
+                    if (line.Contains("SSID") && !line.Contains("BSSID")) {
+                        var parts = line.Split(':');
+                        if (parts.Length > 1) {
+                            ssid = parts[1].Trim();
+                            break;
+                        }
+                    }
+                }
+            } catch {}
+
+            var os = "Windows";
+            try {
+                using var searcher = new ManagementObjectSearcher("SELECT Caption, Version, OSArchitecture FROM Win32_OperatingSystem");
+                foreach (var obj in searcher.Get()) {
+                    os = $"{obj["Caption"]} ({obj["OSArchitecture"]})";
+                }
+            } catch {}
+
+            var loggedUsers = new System.Collections.Generic.List<string>();
+            var admins = new System.Collections.Generic.List<string>();
+            bool isCurrentAdmin = false;
+
+            try {
+                using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+                var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                isCurrentAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            } catch {}
+
+            try {
+                using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_GroupUser WHERE GroupComponent=\"Win32_Group.Domain='\" + Environment.MachineName + \"',Name='Administrators'\"");
+                foreach (var obj in searcher.Get()) {
+                    var part = obj["PartComponent"]?.ToString();
+                    if (!string.IsNullOrEmpty(part)) {
+                        var match = System.Text.RegularExpressions.Regex.Match(part, "Name='([^']+)'");
+                        if (match.Success) admins.Add(match.Groups[1].Value);
+                    }
+                }
+            } catch {}
+            
+            try {
+                using var searcher = new ManagementObjectSearcher("SELECT UserName FROM Win32_ComputerSystem");
+                foreach (var obj in searcher.Get()) {
+                    var user = obj["UserName"]?.ToString();
+                    if (!string.IsNullOrEmpty(user)) loggedUsers.Add(user);
+                }
+            } catch {}
+
+            // Try to get more user info
+            string currentUser = Environment.UserName;
+            string userEmail = "";
+            try {
+                using var searcher = new ManagementObjectSearcher($"SELECT FullName, Caption FROM Win32_UserAccount WHERE Name = '{currentUser}'");
+                foreach (var obj in searcher.Get()) {
+                    var fullName = obj["FullName"]?.ToString();
+                    var caption = obj["Caption"]?.ToString(); // Usually Domain\Name
+                    if (!string.IsNullOrEmpty(fullName)) currentUser = fullName;
+                }
+            } catch {}
+
+            try {
+                // For Microsoft Accounts / Domain accounts, the email might be in the 'EmailAddress' property if available via other WMI classes or environment
+                userEmail = Environment.GetEnvironmentVariable("USEREMAIL") ?? "";
+            } catch {}
+
+            return new
+            {
+                osFull = os,
+                osVersion = Environment.OSVersion.ToString(),
+                machineName = Environment.MachineName,
+                userName = currentUser,
+                userEmail = userEmail,
+                isCurrentAdmin = isCurrentAdmin,
+                ips = ips,
+                macs = macs,
+                ssid = ssid,
+                loggedUsers = loggedUsers,
+                admins = admins,
+                processor = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER"),
+                memory = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / (1024 * 1024 * 1024), // GB
+                timestamp = DateTime.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            return new { error = $"Failed: {ex.Message}" };
+        }
     }
 
     private sealed class StreamProfile

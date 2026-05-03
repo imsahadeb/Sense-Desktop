@@ -65,7 +65,7 @@ public sealed class BackgroundCaptureService : IDisposable
         while (!token.IsCancellationRequested)
         {
             var policy = PolicyManager.Instance.CurrentPolicy;
-            AppLogger.Log($"Background loop iteration started. Policy: {policy.Name}, Interval: {policy.Config.ScreenshotIntervalSec}s, Maintenance: {policy.MaintenanceMode}", LogLevel.Debug);
+            AppLogger.Log($"Background loop iteration started. Policy: {policy.Name}, Interval: {policy.ScreenshotIntervalSec}s, Maintenance: {policy.MaintenanceMode}", LogLevel.Debug);
             
             if (policy.MaintenanceMode)
             {
@@ -78,13 +78,13 @@ public sealed class BackgroundCaptureService : IDisposable
             {
                 // Check Idle status
                 var idleSeconds = GetIdleTimeSeconds();
-                bool isIdle = idleSeconds >= (policy.Config.IdleThresholdSec > 0 ? policy.Config.IdleThresholdSec : 600);
+                bool isIdle = idleSeconds >= (policy.IdleThresholdSec > 0 ? policy.IdleThresholdSec : 600);
 
                 AppLogger.Log($"Triggering capture attempt. Trigger: {(isIdle ? "IDLE" : "SCHEDULED")}, Idle: {idleSeconds}s", LogLevel.Info);
                 
                 // Capture screen
-                var bytes = _captureService.CaptureScreen(0, 0, policy.Config.ScreenshotQuality);
-                AppLogger.Log($"Screen captured. Size: {bytes.Length} bytes. Quality: {policy.Config.ScreenshotQuality}", LogLevel.Info);
+                var bytes = _captureService.CaptureScreen(0, 0, policy.ScreenshotQuality);
+                AppLogger.Log($"Screen captured. Size: {bytes.Length} bytes. Quality: {policy.ScreenshotQuality}", LogLevel.Info);
                 
                 var metadata = new
                 {
@@ -109,7 +109,7 @@ public sealed class BackgroundCaptureService : IDisposable
                 }
 
                 // Apply jitter: ±15% of the interval
-                var baseIntervalMs = Math.Max(10000, policy.Config.ScreenshotIntervalSec * 1000);
+                var baseIntervalMs = Math.Max(10000, policy.ScreenshotIntervalSec * 1000);
                 var jitterRange = (int)(baseIntervalMs * 0.15);
                 var actualIntervalMs = baseIntervalMs + _random.Next(-jitterRange, jitterRange);
 
@@ -125,9 +125,9 @@ public sealed class BackgroundCaptureService : IDisposable
                     
                     // Check if policy changed while we were waiting
                     var updatedPolicy = PolicyManager.Instance.CurrentPolicy;
-                    if (updatedPolicy.Id != policy.Id || updatedPolicy.Config.ScreenshotIntervalSec != policy.Config.ScreenshotIntervalSec)
+                    if (updatedPolicy.Id != policy.Id || updatedPolicy.ScreenshotIntervalSec != policy.ScreenshotIntervalSec)
                     {
-                        AppLogger.Log($"Policy changed from {policy.Config.ScreenshotIntervalSec}s to {updatedPolicy.Config.ScreenshotIntervalSec}s. Restarting loop immediately.", LogLevel.Info);
+                        AppLogger.Log($"Policy changed from {policy.ScreenshotIntervalSec}s to {updatedPolicy.ScreenshotIntervalSec}s. Restarting loop immediately.", LogLevel.Info);
                         break;
                     }
                 }
