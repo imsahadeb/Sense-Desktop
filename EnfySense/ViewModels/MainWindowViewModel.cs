@@ -788,6 +788,17 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void StartTracking()
     {
+        if (IsTrackingActive && _trackingStartedAt.HasValue)
+        {
+            var session = DateTime.UtcNow - _trackingStartedAt.Value;
+            if (IsPaused)
+            {
+                _breakTodayAccumulated += session;
+            }
+            // If already tracking and not paused, we don't need to add anything, 
+            // but the UI tick handles live accumulation anyway.
+        }
+
         IsTrackingActive = true;
         IsPaused = false;
         _trackingStartedAt = DateTime.UtcNow;
