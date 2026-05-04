@@ -8,6 +8,8 @@
         SystemDecorations="None"
         Topmost="True"
         CanResize="False"
+        ShowActivated="False"
+        Focusable="False"
         Background="Transparent"
         ShowInTaskbar="False"
         PointerPressed="OnPointerPressed">
