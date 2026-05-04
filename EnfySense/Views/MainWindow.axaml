@@ -424,39 +424,55 @@
                       </StackPanel>
                    </Grid>
                    
-                   <Grid Height="180" VerticalAlignment="Bottom">
-                      <!-- Grid Lines -->
-                      <StackPanel Spacing="20" VerticalAlignment="Top" Margin="0,10,0,0">
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                      </StackPanel>
-                      
-                      <ItemsControl ItemsSource="{Binding HourlyActivityItems}" VerticalAlignment="Bottom">
+                   <Grid ColumnDefinitions="50, *" Height="200">
+                      <!-- Y-Axis Labels -->
+                      <ItemsControl Grid.Column="0" ItemsSource="{Binding HourlyYAxisLabels}" VerticalAlignment="Top" Margin="0,5,0,0">
                          <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                               <UniformGrid Rows="1" Columns="24" VerticalAlignment="Bottom" />
+                               <StackPanel Spacing="23" />
                             </ItemsPanelTemplate>
                          </ItemsControl.ItemsPanel>
                          <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                               <StackPanel VerticalAlignment="Bottom" Spacing="8">
-                                  <Border Width="12" CornerRadius="2,2,0,0" ClipToBounds="True" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                                     <StackPanel Spacing="0">
-                                        <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
-                                        <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
-                                        <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
-                                     </StackPanel>
-                                     <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
-                                  </Border>
-                                  <TextBlock Text="{Binding Day}" FontSize="8" Foreground="#64748B" HorizontalAlignment="Center" Height="10" />
-                               </StackPanel>
+                               <TextBlock Text="{Binding}" FontSize="9" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,0,8,0" />
                             </DataTemplate>
                          </ItemsControl.ItemTemplate>
                       </ItemsControl>
+
+                      <Grid Grid.Column="1" VerticalAlignment="Stretch">
+                         <!-- Grid Lines -->
+                         <StackPanel Spacing="31" VerticalAlignment="Top" Margin="0,10,0,0">
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                         </StackPanel>
+                         
+                         <ItemsControl ItemsSource="{Binding HourlyActivityItems}" VerticalAlignment="Bottom">
+                            <ItemsControl.ItemsPanel>
+                               <ItemsPanelTemplate>
+                                  <UniformGrid Rows="1" Columns="24" VerticalAlignment="Bottom" />
+                               </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                               <DataTemplate>
+                                  <StackPanel VerticalAlignment="Bottom" Spacing="8">
+                                     <Border Width="12" CornerRadius="2,2,0,0" ClipToBounds="True" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <StackPanel Spacing="0">
+                                           <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
+                                           <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
+                                           <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
+                                        </StackPanel>
+                                        <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
+                                     </Border>
+                                     <TextBlock Text="{Binding Day}" FontSize="8" Foreground="#64748B" HorizontalAlignment="Center" Height="10" />
+                                  </StackPanel>
+                               </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                         </ItemsControl>
+                      </Grid>
                    </Grid>
                 </StackPanel>
              </Border>
@@ -484,39 +500,55 @@
                       </StackPanel>
                    </Grid>
 
-                   <Grid Height="180" VerticalAlignment="Bottom">
-                      <!-- Grid Lines -->
-                      <StackPanel Spacing="20" VerticalAlignment="Top" Margin="0,10,0,0">
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                         <Border Height="1" Background="#1F2937" Opacity="0.5" />
-                      </StackPanel>
-
-                      <ItemsControl ItemsSource="{Binding DailyActivityItems}" VerticalAlignment="Bottom">
+                   <Grid ColumnDefinitions="50, *" Height="200">
+                      <!-- Y-Axis Labels -->
+                      <ItemsControl Grid.Column="0" ItemsSource="{Binding DailyYAxisLabels}" VerticalAlignment="Top" Margin="0,5,0,0">
                          <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                               <UniformGrid Rows="1" Columns="30" VerticalAlignment="Bottom" />
+                               <StackPanel Spacing="23" />
                             </ItemsPanelTemplate>
                          </ItemsControl.ItemsPanel>
                          <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                               <StackPanel VerticalAlignment="Bottom" Spacing="8">
-                                  <Border Width="8" CornerRadius="2,2,0,0" ClipToBounds="True" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                                     <StackPanel Spacing="0">
-                                        <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
-                                        <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
-                                        <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
-                                     </StackPanel>
-                                     <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
-                                  </Border>
-                                  <TextBlock Text="{Binding Day}" FontSize="8" Foreground="#64748B" HorizontalAlignment="Center" Height="10" />
-                               </StackPanel>
+                               <TextBlock Text="{Binding}" FontSize="9" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,0,8,0" />
                             </DataTemplate>
                          </ItemsControl.ItemTemplate>
                       </ItemsControl>
+
+                      <Grid Grid.Column="1" VerticalAlignment="Stretch">
+                         <!-- Grid Lines -->
+                         <StackPanel Spacing="31" VerticalAlignment="Top" Margin="0,10,0,0">
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                            <Border Height="1" Background="#1F2937" Opacity="0.5" />
+                         </StackPanel>
+                         
+                         <ItemsControl ItemsSource="{Binding DailyActivityItems}" VerticalAlignment="Bottom">
+                            <ItemsControl.ItemsPanel>
+                               <ItemsPanelTemplate>
+                                  <UniformGrid Rows="1" Columns="30" VerticalAlignment="Bottom" />
+                               </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                               <DataTemplate>
+                                  <StackPanel VerticalAlignment="Bottom" Spacing="8">
+                                     <Border Width="8" CornerRadius="2,2,0,0" ClipToBounds="True" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <StackPanel Spacing="0">
+                                           <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
+                                           <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
+                                           <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
+                                        </StackPanel>
+                                        <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
+                                     </Border>
+                                     <TextBlock Text="{Binding Day}" FontSize="8" Foreground="#64748B" HorizontalAlignment="Center" Height="10" />
+                                  </StackPanel>
+                               </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                         </ItemsControl>
+                      </Grid>
                    </Grid>
                 </StackPanel>
              </Border>

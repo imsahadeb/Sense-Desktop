@@ -118,7 +118,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _orgTimeDisplay = "--:-- --";
 
     [ObservableProperty]
-    private string _timezoneDisplay = "Asia/Calcutta";
+    private string _timezoneDisplay = "America/New_York";
 
     [ObservableProperty]
     private string _workThisWeekDisplay = "0:00:00";
@@ -226,6 +226,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<ActivityBarItem> DailyActivityItems { get; } = new();
     public ObservableCollection<ActivityBarItem> HourlyActivityItems { get; } = new();
+    public ObservableCollection<string> DailyYAxisLabels { get; } = new();
+    public ObservableCollection<string> HourlyYAxisLabels { get; } = new();
 
     public string LogFilePath => AppLogger.CurrentLogFilePath;
     public bool CanLogin => !IsAuthenticated && !IsBusy;
@@ -364,13 +366,23 @@ public partial class MainWindowViewModel : ViewModelBase
 
                     // 2. Update Daily Chart (Last 30 Days)
                     DailyActivityItems.Clear();
+                    DailyYAxisLabels.Clear();
                     double dailyMax = dashboard.DailyData.Any() ? dashboard.DailyData.Max(h => h.WorkTimeSeconds + h.OvertimeSeconds + h.BreakTimeSeconds) : 0;
                     if (dailyMax < 8 * 3600) dailyMax = 8 * 3600; 
                     double dailyScale = 140.0 / dailyMax;
 
+                    // Populate Daily Y Labels
+                    for (int i = 5; i >= 0; i--) {
+                        DailyYAxisLabels.Add(FormatSimpleTime((dailyMax / 5) * i));
+                    }
+
                     foreach (var item in dashboard.DailyData)
                     {
-                        string label = (item.Day % 5 == 0 || item.Day == 1) ? item.Day.ToString() : "";
+                        // Show labels every 3 days to match screenshot
+                        DateTime date = DateTime.TryParse(item.Date, out var dt) ? dt : DateTime.Today;
+                        string label = (dashboard.DailyData.IndexOf(item) % 3 == 0 || dashboard.DailyData.IndexOf(item) == dashboard.DailyData.Count - 1) 
+                                       ? date.ToString("MMM d") : "";
+                        
                         DailyActivityItems.Add(new ActivityBarItem
                         {
                             Day = label,
@@ -383,16 +395,22 @@ public partial class MainWindowViewModel : ViewModelBase
 
                     // 3. Update Hourly Chart (Today)
                     HourlyActivityItems.Clear();
+                    HourlyYAxisLabels.Clear();
                     double hourlyMax = dashboard.HourlyData.Any() ? dashboard.HourlyData.Max(h => h.WorkTimeSeconds + h.OvertimeSeconds + h.BreakTimeSeconds) : 0;
                     if (hourlyMax < 3600) hourlyMax = 3600; 
                     double hourlyScale = 140.0 / hourlyMax;
 
+                    // Populate Hourly Y Labels
+                    for (int i = 5; i >= 0; i--) {
+                        HourlyYAxisLabels.Add(FormatSimpleTime((hourlyMax / 5) * i));
+                    }
+
                     foreach (var item in dashboard.HourlyData)
                     {
                         string label = "";
-                        if (item.Hour == 0) label = "12A";
-                        else if (item.Hour == 12) label = "12P";
-                        else if (item.Hour % 3 == 0) label = (item.Hour > 12 ? (item.Hour - 12) + "P" : item.Hour + "A");
+                        if (item.Hour % 2 == 0) {
+                            label = item.Hour == 0 ? "12 AM" : item.Hour == 12 ? "12 PM" : (item.Hour > 12 ? (item.Hour - 12) + " PM" : item.Hour + " AM");
+                        }
                         
                         HourlyActivityItems.Add(new ActivityBarItem
                         {
@@ -477,12 +495,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void UpdateDashboardTick()
     {
-        var localZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+        var localZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
         var localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, localZone);
 
         if (localTime.Date != _lastCheckedDate)
         {
-            AppLogger.Log($"Day changed from {_lastCheckedDate:yyyy-MM-dd} to {localTime.Date:yyyy-MM-dd} (IST). Resetting daily counters.", LogLevel.Info);
+            AppLogger.Log($"Day changed from {_lastCheckedDate:yyyy-MM-dd} to {localTime.Date:yyyy-MM-dd} (US/Eastern). Resetting daily counters.", LogLevel.Info);
             _lastCheckedDate = localTime.Date;
             _workTodayAccumulated = TimeSpan.Zero;
             _overtimeTodayAccumulated = TimeSpan.Zero;
