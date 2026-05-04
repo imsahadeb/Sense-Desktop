@@ -86,7 +86,7 @@ begin
   // We do NOT attempt to merge the existing file to avoid AnsiString complexity.
   ConfigJson :=
     '{' + #13#10 +
-    '  "BackendUrl": "http://192.168.56.1:3000",' + #13#10 +
+    '  "BackendUrl": "https://backend.enfycon.com",' + #13#10 +
     '  "AutoConnect": true,' + #13#10 +
     '  "DeviceNameOverride": "",' + #13#10 +
     '  "KeycloakIssuer": "https://auth.enfycon.com/realms/submission_tracker",' + #13#10 +
