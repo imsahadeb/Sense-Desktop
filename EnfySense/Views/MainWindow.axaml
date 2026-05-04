@@ -71,11 +71,24 @@
       <Setter Property="Opacity" Value="0.5" />
     </Style>
     <Style Selector="Border.chart-bar">
+      <Setter Property="RenderTransformOrigin" Value="50%,100%" />
       <Setter Property="Transitions">
         <Transitions>
-          <DoubleTransition Property="Height" Duration="0:0:0.8" Easing="CubicEaseOut" />
+          <DoubleTransition Property="Height" Duration="0:0:0.5" Easing="CubicEaseOut" />
         </Transitions>
       </Setter>
+      <Style.Animations>
+        <Animation Duration="0:0:0.8" FillMode="Forward" Easing="CubicEaseOut">
+          <KeyFrame Cue="0%">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="ScaleTransform.ScaleY" Value="0" />
+          </KeyFrame>
+          <KeyFrame Cue="100%">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="ScaleTransform.ScaleY" Value="1" />
+          </KeyFrame>
+        </Animation>
+      </Style.Animations>
     </Style>
   </Window.Styles>
 
@@ -460,11 +473,11 @@
                                <DataTemplate>
                                   <StackPanel VerticalAlignment="Bottom" Spacing="8">
                                      <Border Width="12" CornerRadius="2,2,0,0" ClipToBounds="True" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                                        <StackPanel Spacing="0">
-                                           <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
-                                           <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
-                                           <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
-                                        </StackPanel>
+                                         <StackPanel Spacing="0">
+                                            <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
+                                            <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
+                                            <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
+                                         </StackPanel>
                                         <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
                                      </Border>
                                      <TextBlock Text="{Binding Day}" FontSize="8" Foreground="#64748B" HorizontalAlignment="Center" Height="10" />
@@ -536,11 +549,11 @@
                                <DataTemplate>
                                   <StackPanel VerticalAlignment="Bottom" Spacing="8">
                                      <Border Width="8" CornerRadius="2,2,0,0" ClipToBounds="True" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                                        <StackPanel Spacing="0">
-                                           <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
-                                           <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
-                                           <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
-                                        </StackPanel>
+                                         <StackPanel Spacing="0">
+                                            <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
+                                            <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
+                                            <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
+                                         </StackPanel>
                                         <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
                                      </Border>
                                      <TextBlock Text="{Binding Day}" FontSize="8" Foreground="#64748B" HorizontalAlignment="Center" Height="10" />
@@ -685,3 +698,4 @@
     </Border>
   </Panel>
 </Window>
+

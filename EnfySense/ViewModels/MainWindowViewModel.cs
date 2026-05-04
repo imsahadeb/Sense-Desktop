@@ -529,6 +529,7 @@ public partial class MainWindowViewModel : ViewModelBase
         WorkTodayDisplay = FormatTimeSpan(totalWork);
         OvertimeTodayDisplay = FormatTimeSpan(totalOvertime);
         BreakTodayDisplay = FormatTimeSpan(totalBreak);
+        TodayHoursDisplay = ((totalWork.TotalSeconds + totalOvertime.TotalSeconds) / 3600.0).ToString("0.0") + "h";
 
         // Update Widget display
         if (currentUtcHour >= 14 && currentUtcHour < 23)
