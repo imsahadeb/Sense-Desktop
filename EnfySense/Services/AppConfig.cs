@@ -8,12 +8,24 @@ namespace EnfyLiveScreenClient.Services;
 
 public sealed class AppConfig
 {
-    public string BackendUrl { get; set; } = "https://backend.enfycon.com";
+    private string? _backendUrl;
+    public string BackendUrl 
+    { 
+        get => Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL") ?? _backendUrl ?? "https://backend.enfycon.com";
+        set => _backendUrl = value;
+    }
+
     public bool AutoConnect { get; set; } = true;
     public string DeviceNameOverride { get; set; } = "";
     public string KeycloakIssuer { get; set; } = "https://auth.enfycon.com/realms/submission_tracker";
     public string KeycloakClientId { get; set; } = "submission_tracker_app";
-    public string SsoRedirectUri { get; set; } = "http://localhost:3001/callback";
+
+    private string? _ssoRedirectUri;
+    public string SsoRedirectUri 
+    { 
+        get => Environment.GetEnvironmentVariable("ENFYSENSE_SSO_REDIRECT") ?? _ssoRedirectUri ?? "http://localhost:3001/callback";
+        set => _ssoRedirectUri = value;
+    }
     public bool RememberMe { get; set; } = true;
     public AuthSession? LastSession { get; set; }
 

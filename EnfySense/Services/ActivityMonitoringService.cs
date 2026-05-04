@@ -26,6 +26,7 @@ public class ActivityMonitoringService : IDisposable
     private bool _isCurrentlyIdle;
     private bool _isPromptOpen;
     private bool _isEnabled = true;
+    private int _isProcessing = 0;
     
     // Threshold is now managed by PolicyManager.Instance.CurrentPolicy.Config.IdleThresholdSec
 
@@ -83,6 +84,8 @@ public class ActivityMonitoringService : IDisposable
     private void OnTick(object? state)
     {
         if (!_isEnabled) return;
+        if (Interlocked.Exchange(ref _isProcessing, 1) == 1) return;
+
         try
         {
             CheckIdleStatus();
@@ -134,6 +137,10 @@ public class ActivityMonitoringService : IDisposable
         catch (Exception ex)
         {
             AppLogger.Log(ex, "ActivityMonitoringTick");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _isProcessing, 0);
         }
     }
 
