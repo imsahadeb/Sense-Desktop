@@ -70,6 +70,13 @@
       </Setter>
       <Setter Property="Opacity" Value="0.5" />
     </Style>
+    <Style Selector="Border.chart-bar">
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition Property="Height" Duration="0:0:0.8" Easing="CubicEaseOut" />
+        </Transitions>
+      </Setter>
+    </Style>
   </Window.Styles>
 
   <Panel>
@@ -332,29 +339,21 @@
                    </Border>
                    <TextBlock Text="TODAY'S SUMMARY" Classes="label" VerticalAlignment="Center" FontWeight="Bold" />
                 </StackPanel>
-                <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto">
+                <Grid ColumnDefinitions="*, *" RowDefinitions="Auto">
                    <StackPanel Grid.Column="0" Spacing="4">
                       <StackPanel Orientation="Horizontal" Spacing="4">
-                         <PathIcon Data="{StaticResource check_regular}" Width="10" Height="10" Foreground="#10B981" />
-                         <TextBlock Text="TASKS" Classes="label" FontSize="10" />
+                         <PathIcon Data="{StaticResource chart_regular}" Width="10" Height="10" Foreground="#F59E0B" />
+                         <TextBlock Text="ACTIVITY SCORE" Classes="label" FontSize="10" FontWeight="Bold" />
                       </StackPanel>
-                      <TextBlock Text="{Binding TasksCount}" Foreground="#F8FAFC" FontSize="18" FontWeight="Bold" />
+                      <TextBlock Text="{Binding ActivityLevel}" Foreground="#FBBF24" FontSize="24" FontWeight="Bold" />
                    </StackPanel>
                    <StackPanel Grid.Column="1" Spacing="4">
                       <StackPanel Orientation="Horizontal" Spacing="4">
-                         <PathIcon Data="{StaticResource pause_regular}" Width="10" Height="10" Foreground="#FBBF24" />
-                         <TextBlock Text="BREAKS" Classes="label" FontSize="10" />
+                         <PathIcon Data="{StaticResource pause_regular}" Width="10" Height="10" Foreground="#3B82F6" />
+                         <TextBlock Text="BREAKS" Classes="label" FontSize="10" FontWeight="Bold" />
                       </StackPanel>
-                      <TextBlock Text="{Binding BreaksCount}" Foreground="#F8FAFC" FontSize="18" FontWeight="Bold" />
+                      <TextBlock Text="{Binding BreaksCount}" Foreground="#F8FAFC" FontSize="24" FontWeight="Bold" />
                    </StackPanel>
-                   
-                   <Border Grid.Row="1" Grid.ColumnSpan="2" Background="#1F2937" CornerRadius="8" Padding="12,8" Margin="0,12,0,0">
-                      <Grid ColumnDefinitions="Auto, *, Auto">
-                         <PathIcon Data="{StaticResource chart_regular}" Width="12" Height="12" Foreground="#F59E0B" />
-                         <TextBlock Grid.Column="1" Text="Activity Level" Classes="label" FontSize="11" Margin="8,0" />
-                         <TextBlock Grid.Column="2" Text="{Binding ActivityLevel}" Foreground="#FBBF24" FontWeight="Bold" />
-                      </Grid>
-                   </Border>
                 </Grid>
               </StackPanel>
             </Border>
@@ -447,9 +446,9 @@
                                <StackPanel VerticalAlignment="Bottom" Spacing="8">
                                   <Border Width="12" CornerRadius="2,2,0,0" ClipToBounds="True" VerticalAlignment="Bottom" HorizontalAlignment="Center">
                                      <StackPanel Spacing="0">
-                                        <Border Height="{Binding OvertimeHeight}" Background="#10B981" />
-                                        <Border Height="{Binding BreakHeight}" Background="#FBBF24" />
-                                        <Border Height="{Binding WorkHeight}" Background="#3B82F6" />
+                                        <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
+                                        <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
+                                        <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
                                      </StackPanel>
                                      <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
                                   </Border>
@@ -507,9 +506,9 @@
                                <StackPanel VerticalAlignment="Bottom" Spacing="8">
                                   <Border Width="8" CornerRadius="2,2,0,0" ClipToBounds="True" VerticalAlignment="Bottom" HorizontalAlignment="Center">
                                      <StackPanel Spacing="0">
-                                        <Border Height="{Binding OvertimeHeight}" Background="#10B981" />
-                                        <Border Height="{Binding BreakHeight}" Background="#FBBF24" />
-                                        <Border Height="{Binding WorkHeight}" Background="#3B82F6" />
+                                        <Border Classes="chart-bar" Height="{Binding OvertimeHeight}" Background="#10B981" />
+                                        <Border Classes="chart-bar" Height="{Binding WorkHeight}" Background="#3B82F6" />
+                                        <Border Classes="chart-bar" Height="{Binding BreakHeight}" Background="#FBBF24" />
                                      </StackPanel>
                                      <ToolTip.Tip><TextBlock Text="{Binding Tooltip}" /></ToolTip.Tip>
                                   </Border>

@@ -354,6 +354,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     WorkThisWeekDisplay = FormatSimpleTime(dashboard.Week.WorkTimeSeconds + dashboard.Week.OvertimeSeconds);
                     WorkThisMonthDisplay = FormatSimpleTime(dashboard.Month.WorkTimeSeconds + dashboard.Month.OvertimeSeconds);
                     ActivityLevel = $"{dashboard.ActivityLevel}%";
+                    BreaksCount = FormatSimpleTime(dashboard.Today.BreakTimeSeconds);
                     Last7DaysDisplay = dashboard.Last7DaysWorkHours;
                     Last30DaysDisplay = dashboard.Last30DaysWorkHours;
                     AvgPerDayDisplay = dashboard.AvgPerDayWorkHours;
@@ -369,13 +370,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
                     foreach (var item in dashboard.DailyData)
                     {
+                        string label = (item.Day % 5 == 0 || item.Day == 1) ? item.Day.ToString() : "";
                         DailyActivityItems.Add(new ActivityBarItem
                         {
-                            Day = item.Day.ToString(),
+                            Day = label,
                             WorkHeight = item.WorkTimeSeconds * dailyScale,
                             OvertimeHeight = item.OvertimeSeconds * dailyScale,
                             BreakHeight = item.BreakTimeSeconds * dailyScale,
-                            Tooltip = $"{item.Date}\nRegular Work: {FormatSimpleTime(item.WorkTimeSeconds)}\nOvertime: {FormatSimpleTime(item.OvertimeSeconds)}"
+                            Tooltip = $"{item.Date}\nWork: {FormatSimpleTime(item.WorkTimeSeconds)}\nBreak: {FormatSimpleTime(item.BreakTimeSeconds)}"
                         });
                     }
 
@@ -387,8 +389,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
                     foreach (var item in dashboard.HourlyData)
                     {
-                        // Only show every 2nd hour label to avoid clutter
-                        string label = (item.Hour % 2 == 0) ? (item.Hour == 0 ? "12 AM" : item.Hour == 12 ? "12 PM" : (item.Hour > 12 ? (item.Hour - 12) + " PM" : item.Hour + " AM")) : "";
+                        string label = "";
+                        if (item.Hour == 0) label = "12A";
+                        else if (item.Hour == 12) label = "12P";
+                        else if (item.Hour % 3 == 0) label = (item.Hour > 12 ? (item.Hour - 12) + "P" : item.Hour + "A");
                         
                         HourlyActivityItems.Add(new ActivityBarItem
                         {
@@ -396,7 +400,7 @@ public partial class MainWindowViewModel : ViewModelBase
                             WorkHeight = item.WorkTimeSeconds * hourlyScale,
                             OvertimeHeight = item.OvertimeSeconds * hourlyScale,
                             BreakHeight = item.BreakTimeSeconds * hourlyScale,
-                            Tooltip = $"{item.Hour}:00 - {item.Hour}:59\nWork: {FormatSimpleTime(item.WorkTimeSeconds)}"
+                            Tooltip = $"{item.Hour}:00 - {item.Hour}:59\nWork: {FormatSimpleTime(item.WorkTimeSeconds)}\nBreak: {FormatSimpleTime(item.BreakTimeSeconds)}"
                         });
                     }
 
