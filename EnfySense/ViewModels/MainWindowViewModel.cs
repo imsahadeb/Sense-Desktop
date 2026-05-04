@@ -426,12 +426,12 @@ public partial class MainWindowViewModel : ViewModelBase
         // Update Widget display
         if (currentUtcHour >= 14 && currentUtcHour < 23)
         {
-            WidgetTimeDisplay = WorkTodayDisplay;
+            WidgetTimeDisplay = totalWork.ToString(@"hh\:mm\:ss");
             WidgetStatusColor = IsPaused ? "#F59E0B" : "#10B981"; // Yellow if break, Green if work
         }
         else
         {
-            WidgetTimeDisplay = OvertimeTodayDisplay;
+            WidgetTimeDisplay = totalOvertime.ToString(@"hh\:mm\:ss");
             WidgetStatusColor = IsPaused ? "#F59E0B" : "#EF4444"; // Yellow if break, Red if overtime
         }
 
