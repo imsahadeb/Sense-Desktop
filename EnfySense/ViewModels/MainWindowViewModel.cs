@@ -909,22 +909,17 @@ public partial class MainWindowViewModel : ViewModelBase
         if (_authSession == null) return;
         try
         {
-            string url = $"{BackendUrl}/sense/admin/secrets";
-            var secrets = await _authApiClient.GetAsync<List<AdminSecretDto>>(url, _authSession.AccessToken);
+            string url = $"{BackendUrl}/auth/admin-secrets";
+            var secrets = await _authApiClient.GetAsync<List<string>>(url, _authSession.AccessToken);
             if (secrets != null)
             {
-                AdminSecurityService.Instance.UpdateSecrets(secrets.Select(s => s.Secret).ToList());
+                AdminSecurityService.Instance.UpdateSecrets(secrets);
             }
         }
         catch (Exception ex)
         {
             AppLogger.Log($"Failed to sync admin secrets: {ex.Message}");
         }
-    }
-
-    private class AdminSecretDto
-    {
-        public string Secret { get; set; } = "";
     }
 
     private void HandleConnectionStatusChanged(string status)
