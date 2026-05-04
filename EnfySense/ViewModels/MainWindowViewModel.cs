@@ -118,7 +118,34 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _orgTimeDisplay = "--:-- --";
 
     [ObservableProperty]
-    private string _timezoneDisplay = "Eastern Time (US)";
+    private string _timezoneDisplay = "Asia/Calcutta";
+
+    [ObservableProperty]
+    private string _workThisWeekDisplay = "0:00:00";
+
+    [ObservableProperty]
+    private string _workThisMonthDisplay = "0:00:00";
+
+    [ObservableProperty]
+    private string _tasksCount = "0";
+
+    [ObservableProperty]
+    private string _breaksCount = "0m";
+
+    [ObservableProperty]
+    private string _activityLevel = "0%";
+
+    [ObservableProperty]
+    private string _last7DaysDisplay = "0.0h";
+
+    [ObservableProperty]
+    private string _last30DaysDisplay = "0.0h";
+
+    [ObservableProperty]
+    private string _avgPerDayDisplay = "0.0h";
+
+    [ObservableProperty]
+    private string _todayHoursDisplay = "0.0h";
 
     [ObservableProperty]
     private string _orgNameDisplay = "enfycon inc.";
@@ -198,6 +225,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _trackingStatusDetail = "Work time is not being tracked and no data is being collected.";
 
     public ObservableCollection<ActivityBarItem> DailyActivityItems { get; } = new();
+    public ObservableCollection<ActivityBarItem> HourlyActivityItems { get; } = new();
 
     public string LogFilePath => AppLogger.CurrentLogFilePath;
     public bool CanLogin => !IsAuthenticated && !IsBusy;
@@ -313,44 +341,73 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            string url = $"{BackendUrl}/sense/devices/{DeviceId}/stats/history";
-            var history = await _authApiClient.GetAsync<List<ActivityHistoryResponse>>(
+            string url = $"{BackendUrl}/sense/devices/{DeviceId}/stats/dashboard";
+            var dashboard = await _authApiClient.GetAsync<DashboardStatsResponse>(
                 url,
                 _authSession?.AccessToken);
 
-            if (history != null)
+            if (dashboard != null)
             {
                 Dispatcher.UIThread.Post(() =>
                 {
+                    // 1. Update Stats Labels
+                    WorkThisWeekDisplay = FormatSimpleTime(dashboard.Week.WorkTimeSeconds + dashboard.Week.OvertimeSeconds);
+                    WorkThisMonthDisplay = FormatSimpleTime(dashboard.Month.WorkTimeSeconds + dashboard.Month.OvertimeSeconds);
+                    ActivityLevel = $"{dashboard.ActivityLevel}%";
+                    Last7DaysDisplay = dashboard.Last7DaysWorkHours;
+                    Last30DaysDisplay = dashboard.Last30DaysWorkHours;
+                    AvgPerDayDisplay = dashboard.AvgPerDayWorkHours;
+                    TodayHoursDisplay = dashboard.TodayWorkHours;
+                    TimezoneDisplay = dashboard.Timezone;
+                    OrgNameDisplay = dashboard.OrgName;
+
+                    // 2. Update Daily Chart (Last 30 Days)
                     DailyActivityItems.Clear();
-                    double totalMax = history.Any() ? history.Max(h => h.WorkTimeSeconds + h.OvertimeSeconds + h.BreakTimeSeconds) : 0;
-                    if (totalMax < 8 * 3600) totalMax = 8 * 3600; 
+                    double dailyMax = dashboard.DailyData.Any() ? dashboard.DailyData.Max(h => h.WorkTimeSeconds + h.OvertimeSeconds + h.BreakTimeSeconds) : 0;
+                    if (dailyMax < 8 * 3600) dailyMax = 8 * 3600; 
+                    double dailyScale = 140.0 / dailyMax;
 
-                    double scaleFactor = 160.0 / totalMax;
-
-                    foreach (var item in history)
+                    foreach (var item in dashboard.DailyData)
                     {
                         DailyActivityItems.Add(new ActivityBarItem
                         {
                             Day = item.Day.ToString(),
-                            WorkHeight = item.WorkTimeSeconds * scaleFactor,
-                            OvertimeHeight = item.OvertimeSeconds * scaleFactor,
-                            BreakHeight = item.BreakTimeSeconds * scaleFactor,
-                            Tooltip = $"{DateTime.Parse(item.Date):MMMM dd, yyyy} (Real Data)\n\n" +
-                                      $"Regular Work: {FormatSimpleTime(item.WorkTimeSeconds)}\n" +
-                                      $"Overtime:     {FormatSimpleTime(item.OvertimeSeconds)}\n" +
-                                      $"Break Time:   {FormatSimpleTime(item.BreakTimeSeconds)}"
+                            WorkHeight = item.WorkTimeSeconds * dailyScale,
+                            OvertimeHeight = item.OvertimeSeconds * dailyScale,
+                            BreakHeight = item.BreakTimeSeconds * dailyScale,
+                            Tooltip = $"{item.Date}\nRegular Work: {FormatSimpleTime(item.WorkTimeSeconds)}\nOvertime: {FormatSimpleTime(item.OvertimeSeconds)}"
                         });
                     }
-                    StatusMessage = "Activity history synchronized.";
-                    LastSyncDisplay = DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss");
+
+                    // 3. Update Hourly Chart (Today)
+                    HourlyActivityItems.Clear();
+                    double hourlyMax = dashboard.HourlyData.Any() ? dashboard.HourlyData.Max(h => h.WorkTimeSeconds + h.OvertimeSeconds + h.BreakTimeSeconds) : 0;
+                    if (hourlyMax < 3600) hourlyMax = 3600; 
+                    double hourlyScale = 140.0 / hourlyMax;
+
+                    foreach (var item in dashboard.HourlyData)
+                    {
+                        // Only show every 2nd hour label to avoid clutter
+                        string label = (item.Hour % 2 == 0) ? (item.Hour == 0 ? "12 AM" : item.Hour == 12 ? "12 PM" : (item.Hour > 12 ? (item.Hour - 12) + " PM" : item.Hour + " AM")) : "";
+                        
+                        HourlyActivityItems.Add(new ActivityBarItem
+                        {
+                            Day = label,
+                            WorkHeight = item.WorkTimeSeconds * hourlyScale,
+                            OvertimeHeight = item.OvertimeSeconds * hourlyScale,
+                            BreakHeight = item.BreakTimeSeconds * hourlyScale,
+                            Tooltip = $"{item.Hour}:00 - {item.Hour}:59\nWork: {FormatSimpleTime(item.WorkTimeSeconds)}"
+                        });
+                    }
+
+                    StatusMessage = "Dashboard synchronized.";
+                    LastSyncDisplay = DateTime.Now.ToString("HH:mm:ss");
                 });
             }
         }
         catch (Exception ex)
         {
-            AppLogger.Log($"Failed to fetch activity history: {ex.Message}");
-            StatusMessage = "History sync failed. Showing offline data.";
+            AppLogger.Log($"Failed to fetch dashboard stats: {ex.Message}");
         }
     }
 
@@ -367,6 +424,30 @@ public partial class MainWindowViewModel : ViewModelBase
         public double OvertimeHeight { get; set; }
         public double BreakHeight { get; set; }
         public string Tooltip { get; set; } = "";
+    }
+
+    public class DashboardStatsResponse
+    {
+        public TodayStatsResponse Today { get; set; } = new();
+        public TodayStatsResponse Week { get; set; } = new();
+        public TodayStatsResponse Month { get; set; } = new();
+        public int ActivityLevel { get; set; }
+        public string Last7DaysWorkHours { get; set; } = "0.0h";
+        public string Last30DaysWorkHours { get; set; } = "0.0h";
+        public string AvgPerDayWorkHours { get; set; } = "0.0h";
+        public string TodayWorkHours { get; set; } = "0.0h";
+        public List<HourStats> HourlyData { get; set; } = new();
+        public List<ActivityHistoryResponse> DailyData { get; set; } = new();
+        public string Timezone { get; set; } = "Asia/Calcutta";
+        public string OrgName { get; set; } = "enfycon";
+    }
+
+    public class HourStats
+    {
+        public int Hour { get; set; }
+        public double WorkTimeSeconds { get; set; }
+        public double OvertimeSeconds { get; set; }
+        public double BreakTimeSeconds { get; set; }
     }
 
     public class ActivityHistoryResponse
@@ -392,13 +473,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void UpdateDashboardTick()
     {
-        var easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-        var easternTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, easternZone);
+        var localZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+        var localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, localZone);
 
-        if (easternTime.Date != _lastCheckedDate)
+        if (localTime.Date != _lastCheckedDate)
         {
-            AppLogger.Log($"Day changed from {_lastCheckedDate:yyyy-MM-dd} to {easternTime.Date:yyyy-MM-dd} (Eastern). Resetting daily counters.", LogLevel.Info);
-            _lastCheckedDate = easternTime.Date;
+            AppLogger.Log($"Day changed from {_lastCheckedDate:yyyy-MM-dd} to {localTime.Date:yyyy-MM-dd} (IST). Resetting daily counters.", LogLevel.Info);
+            _lastCheckedDate = localTime.Date;
             _workTodayAccumulated = TimeSpan.Zero;
             _overtimeTodayAccumulated = TimeSpan.Zero;
             _breakTodayAccumulated = TimeSpan.Zero;
@@ -408,7 +489,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
 
-        OrgTimeDisplay = easternTime.ToString("hh:mm:ss tt");
+        OrgTimeDisplay = localTime.ToString("hh:mm:ss tt");
         
         TimeSpan totalWork = _workTodayAccumulated;
         TimeSpan totalOvertime = _overtimeTodayAccumulated;
