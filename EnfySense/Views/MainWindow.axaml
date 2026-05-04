@@ -361,7 +361,7 @@
           </Grid>
 
           <!-- STATS ROW -->
-          <Grid ColumnDefinitions="*, *, *, *" Spacing="12">
+          <Grid ColumnDefinitions="*, *, *, *" ColumnSpacing="12">
              <Border Grid.Column="0" Classes="card" Padding="20,12">
                 <StackPanel Orientation="Horizontal" Spacing="12">
                    <PathIcon Data="{StaticResource chart_regular}" Width="16" Height="16" Foreground="#3B82F6" />
@@ -401,7 +401,7 @@
           </Grid>
 
           <!-- CHARTS ROW -->
-          <Grid ColumnDefinitions="*, *" Spacing="24">
+          <Grid ColumnDefinitions="*, *" ColumnSpacing="24">
              <Border Grid.Column="0" Classes="card" Height="300">
                 <StackPanel Spacing="20">
                    <Grid ColumnDefinitions="Auto, *, Auto">
