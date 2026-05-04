@@ -11,7 +11,19 @@ public sealed class AppConfig
     private string? _backendUrl;
     public string BackendUrl 
     { 
-        get => Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL") ?? _backendUrl ?? "https://backend.enfycon.com";
+        get 
+        {
+            var env = Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.Process)
+                   ?? Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.User)
+                   ?? Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.Machine);
+
+            if (!string.IsNullOrEmpty(env))
+            {
+                // AppLogger.Log($"Using BackendUrl from Environment: {env}", LogLevel.Info);
+                return env;
+            }
+            return _backendUrl ?? "https://backend.enfycon.com";
+        }
         set => _backendUrl = value;
     }
 
@@ -23,7 +35,15 @@ public sealed class AppConfig
     private string? _ssoRedirectUri;
     public string SsoRedirectUri 
     { 
-        get => Environment.GetEnvironmentVariable("ENFYSENSE_SSO_REDIRECT") ?? _ssoRedirectUri ?? "http://localhost:3001/callback";
+        get 
+        {
+            var env = Environment.GetEnvironmentVariable("ENFYSENSE_SSO_REDIRECT", EnvironmentVariableTarget.Process)
+                   ?? Environment.GetEnvironmentVariable("ENFYSENSE_SSO_REDIRECT", EnvironmentVariableTarget.User)
+                   ?? Environment.GetEnvironmentVariable("ENFYSENSE_SSO_REDIRECT", EnvironmentVariableTarget.Machine);
+
+            if (!string.IsNullOrEmpty(env)) return env;
+            return _ssoRedirectUri ?? "http://localhost:3001/callback";
+        }
         set => _ssoRedirectUri = value;
     }
     public bool RememberMe { get; set; } = true;
@@ -50,6 +70,16 @@ public sealed class AppConfig
     {
         try
         {
+            // Debug logging for environment variables
+            var envBackend = Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.Process)
+                          ?? Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.User)
+                          ?? Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.Machine);
+            
+            if (!string.IsNullOrEmpty(envBackend))
+            {
+                AppLogger.Log($"Detected ENFYSENSE_BACKEND_URL override: {envBackend}", LogLevel.Info);
+            }
+
             if (!File.Exists(ConfigPath))
             {
                 var config = new AppConfig();

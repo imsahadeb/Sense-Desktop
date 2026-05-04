@@ -90,6 +90,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isBusy;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsOverlayActive))]
+    private bool _isApplyingUpdate;
+
+    [ObservableProperty]
     private bool _isOverlayVisible;
 
     [ObservableProperty]
@@ -180,7 +184,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsOverlayActive))]
     private bool _showFinishConfirmation = false;
 
-    public bool IsOverlayActive => ShowFinishConfirmation;
+    public bool IsOverlayActive => ShowFinishConfirmation || IsApplyingUpdate;
 
     public bool IsTrackingStopped => !IsTrackingActive;
     public bool IsNotPaused => !IsPaused;
@@ -533,7 +537,15 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ApplyUpdate()
     {
-        _updateService.ApplyUpdatesAndRestart();
+        IsApplyingUpdate = true;
+        StatusMessage = "Applying update and restarting...";
+        AppLogger.Log("User clicked ApplyUpdate. Setting IsApplyingUpdate = true and calling ApplyUpdatesAndRestart.", LogLevel.Info);
+        
+        // Give the UI a moment to show the overlay before restarting
+        Dispatcher.UIThread.Post(async () => {
+            await Task.Delay(500);
+            _updateService.ApplyUpdatesAndRestart();
+        }, DispatcherPriority.Normal);
     }
 
     [RelayCommand]
