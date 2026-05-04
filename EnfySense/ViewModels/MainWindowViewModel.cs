@@ -817,6 +817,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private void RequestFinishWork()
     {
         ShowFinishConfirmation = true;
+        if (IsWidgetActive)
+        {
+            ExpandToFullView();
+        }
     }
 
     [RelayCommand]
