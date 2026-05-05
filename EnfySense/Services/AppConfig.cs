@@ -69,29 +69,35 @@ public sealed class AppConfig
     [JsonIgnore]
     public static string ConfigPath => Path.Combine(ConfigDir, "appsettings.json");
 
+    [JsonIgnore]
+    public static string GlobalConfigPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "EnfySense",
+        "Config",
+        "appsettings.json");
+
     public static AppConfig Load()
     {
         try
         {
-            // Debug logging for environment variables
-            var envBackend = Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.Process)
-                          ?? Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.User)
-                          ?? Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.Machine);
-            
-            if (!string.IsNullOrEmpty(envBackend))
+            // 1. Try Local User Config (Highest priority)
+            if (File.Exists(ConfigPath))
             {
-                AppLogger.Log($"Detected ENFYSENSE_BACKEND_URL override: {envBackend}", LogLevel.Info);
+                var json = File.ReadAllText(ConfigPath);
+                return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
             }
 
-            if (!File.Exists(ConfigPath))
+            // 2. Try Global Machine Config (From Installer)
+            if (File.Exists(GlobalConfigPath))
             {
-                var config = new AppConfig();
-                config.Save();
-                return config;
+                var json = File.ReadAllText(GlobalConfigPath);
+                return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
             }
 
-            var json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+            // 3. New Default Config
+            var config = new AppConfig();
+            config.Save();
+            return config;
         }
         catch (Exception ex)
         {

@@ -33,6 +33,8 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
+; Allow the user to choose between "Install for all users" and "Install for me only"
+PrivilegesRequiredOverridesAllowed=dialog
 OutputDir={#OutputDir}
 OutputBaseFilename=EnfySense-Setup-{#MyAppVersion}
 Compression=lzma
@@ -40,7 +42,10 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+; Default to admin but allow override via the dialog
 PrivilegesRequired=admin
+SetupIconFile=logo.ico
+WizardSmallImageFile=logo_small.bmp
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Registry]
@@ -72,7 +77,11 @@ var
   ConfigPath: string;
   ConfigJson: AnsiString;
 begin
-  ConfigDir := ExpandConstant('{commonappdata}\EnfySense\Config');
+  if IsAdminInstallMode then
+    ConfigDir := ExpandConstant('{commonappdata}\EnfySense\Config')
+  else
+    ConfigDir := ExpandConstant('{localappdata}\EnfySense\Config');
+
   ConfigPath := ConfigDir + '\appsettings.json';
 
   // Ensure the directory exists
