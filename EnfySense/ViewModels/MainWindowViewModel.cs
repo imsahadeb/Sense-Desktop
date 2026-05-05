@@ -160,6 +160,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _todaySummaryBreakDisplay = "0h 0m";
 
     [ObservableProperty]
+    private string _clockInDisplay = "--:--";
+
+    [ObservableProperty]
+    private string _clockOutDisplay = "--:--";
+
+    [ObservableProperty]
     private string _statusText = "IDLE";
 
     [ObservableProperty]
@@ -383,6 +389,8 @@ public partial class MainWindowViewModel : ViewModelBase
                     AvgPerDayBreakDisplay = dashboard.AvgPerDayBreakHours;
                     TodayHoursDisplay = dashboard.TodayWorkHours;
                     TodaySummaryBreakDisplay = dashboard.TodayBreakHours;
+                    ClockInDisplay = dashboard.ClockIn;
+                    ClockOutDisplay = dashboard.ClockOut;
                     TimezoneDisplay = dashboard.Timezone;
                     OrgNameDisplay = dashboard.OrgName;
 
@@ -487,6 +495,8 @@ public partial class MainWindowViewModel : ViewModelBase
         public string AvgPerDayBreakHours { get; set; } = "0h 0m";
         public string TodayWorkHours { get; set; } = "0h 0m";
         public string TodayBreakHours { get; set; } = "0h 0m";
+        public string ClockIn { get; set; } = "--:--";
+        public string ClockOut { get; set; } = "--:--";
         public List<HourStats> HourlyData { get; set; } = new();
         public List<ActivityHistoryResponse> DailyData { get; set; } = new();
         public string Timezone { get; set; } = "Asia/Calcutta";
