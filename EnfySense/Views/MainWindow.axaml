@@ -387,14 +387,13 @@
                    
                    <StackPanel Spacing="6">
                       <ProgressBar Value="98" Height="6" CornerRadius="3" Background="#1E293B" Foreground="#10B981" />
-                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                         <TextBlock Text="AES-256 Encrypted" Foreground="#475569" FontSize="10" FontStyle="Italic" />
-                         <Separator Width="1" Background="Transparent" />
-                         <StackPanel Orientation="Horizontal" Spacing="4" Margin="auto,0,0,0">
-                            <TextBlock Text="Last sync:" Classes="label" FontSize="10" />
-                            <TextBlock Text="{Binding LastSyncDisplay}" Foreground="#94A3B8" FontSize="10" FontWeight="Bold" />
+                      <Grid ColumnDefinitions="*, Auto">
+                         <TextBlock Text="AES-256 Encrypted" Foreground="#475569" FontSize="10" FontStyle="Italic" VerticalAlignment="Center" />
+                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="Last sync:" Classes="label" FontSize="10" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding LastSyncDisplay}" Foreground="#94A3B8" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" />
                          </StackPanel>
-                      </StackPanel>
+                      </Grid>
                    </StackPanel>
                 </StackPanel>
               </StackPanel>
