@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
+using Microsoft.Win32;
 
 namespace EnfyLiveScreenClient.ViewModels;
 
@@ -913,8 +914,31 @@ public partial class MainWindowViewModel : ViewModelBase
             _activityService.InactivityTimeout += () => Dispatcher.UIThread.Post(() => {
                 if (IsTrackingActive && !IsPaused)
                 {
-                    AppLogger.Log("Inactivity timeout received in ViewModel. Triggering PauseTracking.");
+                    AppLogger.Log("Inactivity threshold hit. Adjusting time retroactively.");
+                    
+                    // 1. Determine threshold from policy
+                    int threshold = PolicyManager.Instance.CurrentPolicy.IdleThresholdSec;
+                    TimeSpan adjustment = TimeSpan.FromSeconds(threshold);
+                    
+                    // 2. Switch to break mode
                     PauseTracking();
+                    
+                    // 3. Move the idle threshold time from Work to Break
+                    // PauseTracking just added the whole session (including idle time) to work.
+                    // We now subtract that idle time back from work and move it to break.
+                    if (_overtimeTodayAccumulated >= adjustment)
+                    {
+                        _overtimeTodayAccumulated -= adjustment;
+                    }
+                    else if (_workTodayAccumulated >= adjustment)
+                    {
+                        _workTodayAccumulated -= adjustment;
+                    }
+                    
+                    _breakTodayAccumulated += adjustment;
+                    
+                    AppLogger.Log($"Retroactively moved {threshold}s from Work to Break.");
+                    StatusMessage = $"Auto-paused: {threshold}s idle time moved to break.";
                 }
             });
 
@@ -930,6 +954,12 @@ public partial class MainWindowViewModel : ViewModelBase
             IsDataInSync = true;
             LastSyncDisplay = GetEasternTimeNow().ToString("MMM dd, yyyy hh:mm:ss tt");
             StatusMessage = "Connected. Monitoring active.";
+
+            // Auto-start tracking on login/connection if terms accepted
+            if (!IsTrackingActive && !IsTermsVisible)
+            {
+                StartTracking();
+            }
             
             _ = FetchTodayStatsAsync();
             _ = FetchActivityHistoryAsync();
@@ -1173,8 +1203,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
+            IsBusy = true;
             var appPath = AppDomain.CurrentDomain.BaseDirectory;
             var uninstaller = Path.Combine(appPath, "unins000.exe");
+
+            // If not found locally, try to find it via Registry (for installed versions)
+            if (!File.Exists(uninstaller))
+            {
+                string registryPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{64D4FA90-13D1-4EA5-901A-0F2CC3C44C80}_is1";
+                using (var key = Registry.LocalMachine.OpenSubKey(registryPath))
+                {
+                    var uninstallString = key?.GetValue("UninstallString")?.ToString();
+                    if (!string.IsNullOrEmpty(uninstallString))
+                    {
+                        // UninstallString often contains quotes and arguments, we just want the EXE
+                        uninstaller = uninstallString.Replace("\"", "").Trim();
+                    }
+                }
+            }
 
             if (File.Exists(uninstaller))
             {
@@ -1193,6 +1239,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             AppLogger.Log(ex, "launching uninstaller");
             StatusMessage = "Failed to launch uninstaller.";
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 
