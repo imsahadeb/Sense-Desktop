@@ -214,7 +214,8 @@ public class ActivityMonitoringService : IDisposable
                 if (_isCurrentlyIdle && !_isPromptOpen)
                 {
                     _isCurrentlyIdle = false;
-                    AppLogger.Log("User has returned from IDLE naturally.", LogLevel.Info);
+                    AppLogger.Log("User has returned from IDLE naturally. Triggering resume.", LogLevel.Info);
+                    InactivityResumed?.Invoke();
                     _ = _agent.ReportWorkStatusAsync("WORKING");
                 }
             }
