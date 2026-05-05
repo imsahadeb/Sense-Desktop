@@ -78,6 +78,26 @@
         </Transitions>
       </Setter>
     </Style>
+    
+    <Style Selector="Ellipse.pulse">
+       <Style.Animations>
+          <Animation Duration="0:0:2" IterationCount="Infinite">
+             <KeyFrame Cue="0%">
+                <Setter Property="Opacity" Value="1" />
+                <Setter Property="ScaleTransform.ScaleX" Value="1" />
+                <Setter Property="ScaleTransform.ScaleY" Value="1" />
+             </KeyFrame>
+             <KeyFrame Cue="50%">
+                <Setter Property="Opacity" Value="0.4" />
+             </KeyFrame>
+             <KeyFrame Cue="100%">
+                <Setter Property="Opacity" Value="1" />
+                <Setter Property="ScaleTransform.ScaleX" Value="1.1" />
+                <Setter Property="ScaleTransform.ScaleY" Value="1.1" />
+             </KeyFrame>
+          </Animation>
+       </Style.Animations>
+    </Style>
   </Window.Styles>
 
   <Panel>
@@ -183,14 +203,6 @@
               </StackPanel>
               <TextBlock Text="{Binding OvertimeTodayDisplay}" FontSize="20" Foreground="#F8FAFC" FontWeight="Bold" />
             </StackPanel>
-
-            <StackPanel VerticalAlignment="Center">
-              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4">
-                <PathIcon Data="{StaticResource pause_regular}" Width="12" Height="12" Foreground="#F59E0B" />
-                <TextBlock Text="BREAK TODAY" FontSize="10" Foreground="#64748B" FontWeight="Bold" LetterSpacing="0.5" />
-              </StackPanel>
-              <TextBlock Text="{Binding BreakTodayDisplay}" FontSize="20" Foreground="#F8FAFC" FontWeight="Bold" />
-            </StackPanel>
           </StackPanel>
 
           <!-- Column 3: Action Buttons -->
@@ -286,49 +298,96 @@
 
             <Border Grid.Column="1" Classes="card" Margin="12,0">
                <StackPanel Spacing="16">
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                   <Border Width="32" Height="32" CornerRadius="8" Background="#3B82F6">
-                      <PathIcon Data="{StaticResource clock_regular}" Width="16" Height="16" Foreground="White" />
-                   </Border>
-                   <TextBlock Text="WORK TIME TRACKING" Classes="label" VerticalAlignment="Center" FontWeight="Bold" />
-                </StackPanel>
-                <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto">
-                   <StackPanel Grid.Column="0" Spacing="4">
-                      <TextBlock Text="TODAY" Classes="label" FontSize="10" />
-                      <TextBlock Text="{Binding WorkTodayDisplay}" Foreground="#F8FAFC" FontSize="18" FontWeight="Bold" />
-                   </StackPanel>
-                   <StackPanel Grid.Column="1" Spacing="4">
-                      <TextBlock Text="THIS WEEK" Classes="label" FontSize="10" />
-                      <TextBlock Text="{Binding WorkThisWeekDisplay}" Foreground="#3B82F6" FontSize="18" FontWeight="Bold" />
-                   </StackPanel>
-                   <Border Grid.Row="1" Grid.ColumnSpan="2" Height="1" Background="#1F2937" Margin="0,12" />
-                   <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0,16,0,0">
-                      <TextBlock Text="This Month" Classes="label" VerticalAlignment="Center" />
-                      <TextBlock Text="{Binding WorkThisMonthDisplay}" Foreground="#F8FAFC" FontSize="16" FontWeight="Bold" HorizontalAlignment="Right" Margin="80,0,0,0" />
-                   </StackPanel>
-                </Grid>
-              </StackPanel>
+                 <Grid ColumnDefinitions="*, Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                       <Border Width="32" Height="32" CornerRadius="8" Background="#3B82F6">
+                          <PathIcon Data="{StaticResource clock_regular}" Width="16" Height="16" Foreground="White" />
+                       </Border>
+                       <TextBlock Text="WORK TIME TRACKING" Classes="label" VerticalAlignment="Center" FontWeight="Bold" />
+                    </StackPanel>
+                    <!-- Current State Badge -->
+                    <Border Grid.Column="1" Padding="8,4" CornerRadius="6" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
+                       <StackPanel Orientation="Horizontal" Spacing="6">
+                          <Ellipse Width="6" Height="6" Fill="{Binding StatusColor}" Classes="pulse" />
+                          <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}" FontSize="10" FontWeight="Black" VerticalAlignment="Center" />
+                       </StackPanel>
+                    </Border>
+                 </Grid>
+
+                 <StackPanel Spacing="4">
+                    <TextBlock Text="{Binding WorkTodayDisplay}" Foreground="#F8FAFC" FontSize="36" FontWeight="ExtraBold" FontFamily="Courier New" />
+                    <TextBlock Text="Total Worked Today (Inc. Overtime)" Classes="label" FontSize="11" />
+                 </StackPanel>
+
+                 <Grid ColumnDefinitions="*, *" RowDefinitions="Auto">
+                    <Border Grid.Column="0" Background="#1E293B" CornerRadius="10" Padding="12" Margin="0,0,6,0">
+                       <StackPanel Spacing="2">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                             <PathIcon Data="{StaticResource pause_regular}" Width="10" Height="10" Foreground="#F59E0B" />
+                             <TextBlock Text="BREAK TIME" Classes="label" FontSize="9" FontWeight="Bold" />
+                          </StackPanel>
+                          <TextBlock Text="{Binding BreakTodayDisplay}" Foreground="White" FontSize="16" FontWeight="Bold" />
+                       </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Background="#581C87" BackgroundOpacity="0.2" BorderBrush="#7E22CE" BorderThickness="1" CornerRadius="10" Padding="12" Margin="6,0,0,0">
+                       <StackPanel Spacing="2">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                             <PathIcon Data="{StaticResource arrow_circle_up_regular}" Width="10" Height="10" Foreground="#A855F7" />
+                             <TextBlock Text="OVERTIME" Classes="label" FontSize="9" FontWeight="Bold" Foreground="#A855F7" />
+                          </StackPanel>
+                          <TextBlock Text="{Binding OvertimeTodayDisplay}" Foreground="White" FontSize="16" FontWeight="Bold" />
+                       </StackPanel>
+                    </Border>
+                 </Grid>
+
+                 <Grid ColumnDefinitions="*, *" Margin="0,8,0,0">
+                    <StackPanel Spacing="2">
+                       <TextBlock Text="THIS WEEK" Classes="label" FontSize="9" FontWeight="Bold" />
+                       <TextBlock Text="{Binding WorkThisWeekDisplay}" Foreground="#94A3B8" FontSize="14" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                       <TextBlock Text="THIS MONTH" Classes="label" FontSize="9" FontWeight="Bold" TextAlignment="Right" />
+                       <TextBlock Text="{Binding WorkThisMonthDisplay}" Foreground="#94A3B8" FontSize="14" FontWeight="SemiBold" TextAlignment="Right" />
+                    </StackPanel>
+                 </Grid>
+               </StackPanel>
             </Border>
 
             <Border Grid.Column="2" Classes="card" Margin="12,0">
-              <StackPanel Spacing="16">
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                   <Border Width="32" Height="32" CornerRadius="8" Background="#A855F7">
-                      <PathIcon Data="{StaticResource cloud_regular}" Width="16" Height="16" Foreground="White" />
+              <StackPanel Spacing="20">
+                <Grid ColumnDefinitions="*, Auto">
+                   <StackPanel Orientation="Horizontal" Spacing="12">
+                      <Border Width="32" Height="32" CornerRadius="8" Background="#6366F1">
+                         <PathIcon Data="{StaticResource cloud_regular}" Width="16" Height="16" Foreground="White" />
+                      </Border>
+                      <TextBlock Text="CLOUD SYNC" Classes="label" VerticalAlignment="Center" FontWeight="Bold" />
+                   </StackPanel>
+                   <!-- Live Status Badge -->
+                   <Border Grid.Column="1" Padding="8,4" CornerRadius="6" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                         <Ellipse Width="6" Height="6" Fill="#10B981" Classes="pulse" />
+                         <TextBlock Text="LIVE SYNCING" Foreground="#10B981" FontSize="9" FontWeight="Black" VerticalAlignment="Center" />
+                      </StackPanel>
                    </Border>
-                   <TextBlock Text="CLOUD SYNC" Classes="label" VerticalAlignment="Center" FontWeight="Bold" />
-                </StackPanel>
-                <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto">
-                   <PathIcon Grid.Row="0" Grid.Column="0" Data="{StaticResource check_regular}" Width="14" Height="14" Foreground="#10B981" VerticalAlignment="Center" />
-                   <TextBlock Grid.Row="0" Grid.Column="1" Text="Status" Classes="label" Margin="8,0,0,0" VerticalAlignment="Center" />
-                   <TextBlock Grid.Row="0" Grid.Column="1" Text="Synced" Foreground="#10B981" FontWeight="Bold" HorizontalAlignment="Right" />
-                   
-                   <Border Grid.Row="1" Grid.ColumnSpan="2" Height="1" Background="#1F2937" Margin="0,12" />
-                   
-                   <PathIcon Grid.Row="1" Grid.Column="0" Data="{StaticResource clock_regular}" Width="14" Height="14" Foreground="#94A3B8" VerticalAlignment="Center" />
-                   <TextBlock Grid.Row="1" Grid.Column="1" Text="Last Sync" Classes="label" Margin="8,0,0,0" VerticalAlignment="Center" />
-                   <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LastSyncDisplay}" Foreground="#F8FAFC" FontWeight="Bold" HorizontalAlignment="Right" />
                 </Grid>
+
+                <StackPanel Spacing="12">
+                   <Grid ColumnDefinitions="*, Auto">
+                      <TextBlock Text="System Latency" Classes="label" FontSize="12" />
+                      <TextBlock Text="12ms" Foreground="White" FontSize="12" FontWeight="Bold" FontFamily="Courier New" />
+                   </Grid>
+                   <!-- Health Bar -->
+                   <Border Height="4" CornerRadius="2" Background="#1E293B" ClipToBounds="True">
+                      <Border HorizontalAlignment="Left" Width="180" Background="#10B981" CornerRadius="2" />
+                   </Border>
+                   <Grid ColumnDefinitions="*, Auto">
+                      <TextBlock Text="Security: AES-256 Encrypted" Foreground="#475569" FontSize="10" FontStyle="Italic" />
+                      <StackPanel Orientation="Horizontal" Spacing="4">
+                         <TextBlock Text="Last sync:" Classes="label" FontSize="10" />
+                         <TextBlock Text="{Binding LastSyncDisplay}" Foreground="#94A3B8" FontSize="10" FontWeight="Bold" />
+                      </StackPanel>
+                   </Grid>
+                </StackPanel>
               </StackPanel>
             </Border>
 
@@ -617,20 +676,16 @@
           </Border>
        </StackPanel>
     </Border>
+
     <!-- Applying Update Overlay -->
     <Border Background="#CC000000" IsVisible="{Binding IsApplyingUpdate}" ZIndex="1000">
       <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="24">
         <Border Background="#111827" BorderBrush="#3B82F6" BorderThickness="2" CornerRadius="24" Padding="40" Width="450">
           <StackPanel Spacing="32">
             <Grid Height="60" Width="60" HorizontalAlignment="Center">
-               <!-- Simple spinning animation simulated by a PathIcon -->
                <PathIcon Data="{StaticResource arrow_circle_up_regular}" 
                          Width="60" Height="60" 
                          Foreground="#3B82F6">
-                 <PathIcon.Styles>
-                   <Style Selector="PathIcon">
-                   </Style>
-                 </PathIcon.Styles>
                </PathIcon>
             </Grid>
             
@@ -676,5 +731,3 @@
     </Border>
   </Panel>
 </Window>
-
-

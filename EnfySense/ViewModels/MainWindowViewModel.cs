@@ -148,7 +148,16 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _todayHoursDisplay = "0.0h";
 
     [ObservableProperty]
-    private string _orgNameDisplay = "enfycon inc.";
+    private string _statusText = "IDLE";
+
+    [ObservableProperty]
+    private string _statusColor = "#94A3B8";
+
+    [ObservableProperty]
+    private string _lastSyncDisplay = "Never";
+
+    [ObservableProperty]
+    private string _orgNameDisplay = "enfycon";
 
     [ObservableProperty]
     private bool _isWidgetActive = false;
@@ -529,10 +538,27 @@ public partial class MainWindowViewModel : ViewModelBase
             else totalOvertime += currentSession;
         }
         
-        WorkTodayDisplay = FormatTimeSpan(totalWork);
+        WorkTodayDisplay = FormatTimeSpan(totalWork + totalOvertime);
         OvertimeTodayDisplay = FormatTimeSpan(totalOvertime);
         BreakTodayDisplay = FormatTimeSpan(totalBreak);
         TodayHoursDisplay = ((totalWork.TotalSeconds + totalOvertime.TotalSeconds) / 3600.0).ToString("0.0") + "h";
+
+        // Update Status Badge
+        if (!IsTrackingActive)
+        {
+            StatusText = "IDLE";
+            StatusColor = "#94A3B8";
+        }
+        else if (IsPaused)
+        {
+            StatusText = "ON BREAK";
+            StatusColor = "#F59E0B";
+        }
+        else
+        {
+            StatusText = "WORKING";
+            StatusColor = "#10B981";
+        }
 
         // Update Widget display
         if (currentUtcHour >= 14 && currentUtcHour < 23)
