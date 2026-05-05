@@ -20,11 +20,34 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            desktop.MainWindow = new MainWindow
+            bool isStartup = false;
+            if (desktop.Args != null)
             {
-                DataContext = new MainWindowViewModel(),
+                foreach (var arg in desktop.Args)
+                {
+                    if (arg == "--startup") isStartup = true;
+                }
+            }
+
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            var vm = new MainWindowViewModel();
+            var window = new MainWindow
+            {
+                DataContext = vm,
             };
+            
+            desktop.MainWindow = window;
+
+            if (isStartup)
+            {
+                // If started automatically, keep main window hidden and show only the widget
+                window.WindowState = WindowState.Minimized;
+                vm.IsWidgetActive = true;
+            }
+            else
+            {
+                window.Show();
+            }
         }
 
         base.OnFrameworkInitializationCompleted();

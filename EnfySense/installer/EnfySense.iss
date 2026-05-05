@@ -44,7 +44,7 @@ PrivilegesRequired=admin
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Registry]
-Root: HKA; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "EnfySense"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "EnfySense"; ValueData: """{app}\{#MyAppExeName}"" --startup"; Flags: uninsdeletevalue
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
