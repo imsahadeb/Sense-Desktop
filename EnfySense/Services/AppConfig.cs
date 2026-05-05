@@ -8,44 +8,41 @@ namespace EnfyLiveScreenClient.Services;
 
 public sealed class AppConfig
 {
-    private string? _backendUrl;
-    public string BackendUrl 
-    { 
-        get 
-        {
-            var env = Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.Process)
-                   ?? Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.User)
-                   ?? Environment.GetEnvironmentVariable("ENFYSENSE_BACKEND_URL", EnvironmentVariableTarget.Machine);
+    public string? BackendUrl { get; set; }
+    public string? SsoRedirectUri { get; set; }
 
-            if (!string.IsNullOrEmpty(env))
-            {
-                // AppLogger.Log($"Using BackendUrl from Environment: {env}", LogLevel.Info);
-                return env;
-            }
-            return _backendUrl ?? "https://backend.enfycon.com";
+    [JsonIgnore]
+    public string EffectiveBackendUrl
+    {
+        get
+        {
+            var env = GetEnv("ENFYSENSE_BACKEND_URL");
+            if (!string.IsNullOrEmpty(env)) return env;
+            return BackendUrl ?? "https://backend.enfycon.com";
         }
-        set => _backendUrl = value;
     }
 
+    [JsonIgnore]
+    public string EffectiveSsoRedirectUri
+    {
+        get
+        {
+            var env = GetEnv("ENFYSENSE_SSO_REDIRECT");
+            if (!string.IsNullOrEmpty(env)) return env;
+            return SsoRedirectUri ?? "http://localhost:3001/callback";
+        }
+    }
+
+    private static string? GetEnv(string name)
+    {
+        return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process)
+            ?? Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.User)
+            ?? Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Machine);
+    }
     public bool AutoConnect { get; set; } = true;
     public string DeviceNameOverride { get; set; } = "";
     public string KeycloakIssuer { get; set; } = "https://auth.enfycon.com/realms/submission_tracker";
     public string KeycloakClientId { get; set; } = "submission_tracker_app";
-
-    private string? _ssoRedirectUri;
-    public string SsoRedirectUri 
-    { 
-        get 
-        {
-            var env = Environment.GetEnvironmentVariable("ENFYSENSE_SSO_REDIRECT", EnvironmentVariableTarget.Process)
-                   ?? Environment.GetEnvironmentVariable("ENFYSENSE_SSO_REDIRECT", EnvironmentVariableTarget.User)
-                   ?? Environment.GetEnvironmentVariable("ENFYSENSE_SSO_REDIRECT", EnvironmentVariableTarget.Machine);
-
-            if (!string.IsNullOrEmpty(env)) return env;
-            return _ssoRedirectUri ?? "http://localhost:3001/callback";
-        }
-        set => _ssoRedirectUri = value;
-    }
     public bool RememberMe { get; set; } = true;
     public AuthSession? LastSession { get; set; }
 

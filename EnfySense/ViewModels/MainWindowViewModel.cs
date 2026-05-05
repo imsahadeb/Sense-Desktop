@@ -266,8 +266,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel()
     {
         _config = AppConfig.Load();
-        BackendUrl = _config.BackendUrl;
-        SsoRedirectUri = _config.SsoRedirectUri;
+        BackendUrl = _config.EffectiveBackendUrl;
+        SsoRedirectUri = _config.EffectiveSsoRedirectUri;
         DeviceName = string.IsNullOrWhiteSpace(_config.DeviceNameOverride)
             ? Environment.MachineName
             : _config.DeviceNameOverride;
