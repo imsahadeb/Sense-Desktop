@@ -1188,7 +1188,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppLogger.Log("Failed to launch uninstaller", LogLevel.Error, ex);
+            AppLogger.Log(ex, "launching uninstaller");
             StatusMessage = "Failed to launch uninstaller.";
         }
     }

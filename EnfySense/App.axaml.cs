@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls;
 using System.Threading.Tasks;
 using Avalonia.Markup.Xaml;
 using EnfyLiveScreenClient.ViewModels;
