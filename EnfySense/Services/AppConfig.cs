@@ -17,13 +17,17 @@ public sealed class AppConfig
         get
         {
             var env = GetEnv("ENFYSENSE_BACKEND_URL");
-            if (!string.IsNullOrEmpty(env)) return env;
             
-            // If BackendUrl is null or empty, default to production
-            if (string.IsNullOrWhiteSpace(BackendUrl)) 
-                return "https://backend.enfycon.com";
+            // If environment variable exists AND is not localhost, use it
+            if (!string.IsNullOrEmpty(env) && !env.Contains("localhost")) 
+                return env.StartsWith("http") ? env : $"https://{env}";
+            
+            // Fallback to config or default production URL
+            var url = BackendUrl;
+            if (string.IsNullOrWhiteSpace(url) || url.Contains("localhost")) 
+                url = "https://backend.enfycon.com";
 
-            return BackendUrl;
+            return url.StartsWith("http") ? url : $"https://{url}";
         }
     }
 

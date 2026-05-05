@@ -52,6 +52,9 @@ ArchitecturesInstallIn64BitMode=x64compatible
 ; SetupIconFile=logo.ico
 ; WizardSmallImageFile=logo_small.bmp
 UninstallDisplayIcon={app}\{#MyAppExeName}
+; Used to detect if the app is running
+AppMutex=Global\EnfySense-SingleInstance-73b9e40f-7b7e-4d8e-90f7-920f0f7f3f3f
+CloseApplications=yes
 
 [Registry]
 Root: HKA; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "EnfySense"; ValueData: """{app}\{#MyAppExeName}"" --startup"; Flags: uninsdeletevalue
@@ -122,7 +125,7 @@ var
 begin
   Result := False;
   
-  Form := TSetupForm.Create(nil);
+  Form := TSetupForm.CreateNew(nil, 0);
   Form.ClientWidth := 380;
   Form.ClientHeight := 160;
   Form.Caption := 'Admin Verification Required';
@@ -173,7 +176,11 @@ begin
     if Exec(ExpandConstant('{app}\{#MyAppExeName}'), '--verify-totp ' + Code, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
     begin
       if ResultCode = 0 then
-        Result := True
+      begin
+        // Kill the app process if it's running before proceeding with removal
+        Exec('taskkill.exe', '/f /im {#MyAppExeName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        Result := True;
+      end
       else
         MsgBox('Invalid verification code. Uninstallation aborted.', mbError, MB_OK);
     end
