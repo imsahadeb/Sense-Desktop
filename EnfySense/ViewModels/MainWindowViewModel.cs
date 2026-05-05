@@ -684,6 +684,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void SaveSettings()
     {
+        _config.BackendUrl = BackendUrl;
+        _config.SsoRedirectUri = SsoRedirectUri;
+        _config.AutoConnect = AutoConnect;
+        _config.DeviceNameOverride = DeviceName == Environment.MachineName ? "" : DeviceName;
+        
         _config.Save();
         StatusMessage = "Settings saved successfully.";
     }

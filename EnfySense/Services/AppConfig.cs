@@ -18,7 +18,12 @@ public sealed class AppConfig
         {
             var env = GetEnv("ENFYSENSE_BACKEND_URL");
             if (!string.IsNullOrEmpty(env)) return env;
-            return BackendUrl ?? "https://backend.enfycon.com";
+            
+            // If BackendUrl is null or empty, default to production
+            if (string.IsNullOrWhiteSpace(BackendUrl)) 
+                return "https://backend.enfycon.com";
+
+            return BackendUrl;
         }
     }
 
@@ -56,7 +61,7 @@ public sealed class AppConfig
 
     [JsonIgnore]
     public static string ConfigDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "EnfySense",
         "Config");
 
@@ -98,6 +103,19 @@ public sealed class AppConfig
     {
         try
         {
+            // Security/routing guard: If BackendUrl matches an environment override 
+            // or the default production URL, we save it as null to avoid hardcoding 
+            // transient states into the config file.
+            var envBackend = GetEnv("ENFYSENSE_BACKEND_URL");
+            if (!string.IsNullOrEmpty(envBackend) && BackendUrl == envBackend)
+            {
+                BackendUrl = null;
+            }
+            if (BackendUrl == "https://backend.enfycon.com")
+            {
+                BackendUrl = null;
+            }
+
             var json = JsonSerializer.Serialize(this, new JsonSerializerOptions
             {
                 WriteIndented = true,
