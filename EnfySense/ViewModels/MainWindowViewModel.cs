@@ -162,8 +162,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _clockInDisplay = "--:--";
 
-    [ObservableProperty]
     private string _clockOutDisplay = "--:--";
+    public string ClockOutDisplay
+    {
+        get => IsTrackingActive ? "--:--" : _clockOutDisplay;
+        set => SetProperty(ref _clockOutDisplay, value);
+    }
 
     [ObservableProperty]
     private string _statusText = "IDLE";
@@ -340,7 +344,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     
                     StatusMessage = "Today's stats synchronized.";
                     IsDataInSync = true;
-                    LastSyncDisplay = GetEasternTimeNow().ToString("MMM dd, yyyy HH:mm:ss");
+                    LastSyncDisplay = GetEasternTimeNow().ToString("MMM dd, yyyy hh:mm:ss tt");
                     UpdateDashboardTick(); 
                 });
             }
@@ -389,8 +393,9 @@ public partial class MainWindowViewModel : ViewModelBase
                     AvgPerDayBreakDisplay = dashboard.AvgPerDayBreakHours;
                     TodayHoursDisplay = dashboard.TodayWorkHours;
                     TodaySummaryBreakDisplay = dashboard.TodayBreakHours;
-                    ClockInDisplay = dashboard.ClockIn;
-                    ClockOutDisplay = dashboard.ClockOut;
+                    ClockInDisplay = ReformatTimeWithSeconds(dashboard.ClockIn);
+                    _clockOutDisplay = ReformatTimeWithSeconds(dashboard.ClockOut);
+                    OnPropertyChanged(nameof(ClockOutDisplay));
                     TimezoneDisplay = dashboard.Timezone;
                     OrgNameDisplay = dashboard.OrgName;
 
@@ -456,7 +461,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     }
 
                     StatusMessage = "Dashboard synchronized.";
-                    LastSyncDisplay = GetEasternTimeNow().ToString("HH:mm:ss");
+                    LastSyncDisplay = GetEasternTimeNow().ToString("hh:mm:ss tt");
                 });
             }
         }
@@ -845,7 +850,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             IsConnected = true;
             IsDataInSync = true;
-            LastSyncDisplay = GetEasternTimeNow().ToString("MMM dd, yyyy HH:mm:ss");
+            LastSyncDisplay = GetEasternTimeNow().ToString("MMM dd, yyyy hh:mm:ss tt");
             StatusMessage = "Connected. Monitoring active.";
             
             _ = FetchTodayStatsAsync();
@@ -1216,6 +1221,28 @@ public partial class MainWindowViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private string ReformatTimeWithSeconds(string? timeStr)
+    {
+        if (string.IsNullOrEmpty(timeStr) || timeStr == "--:--") return "--:--:--";
+        try
+        {
+            if (DateTime.TryParse(timeStr, out var dt))
+            {
+                return dt.ToString("hh:mm:ss tt");
+            }
+            // If it's just HH:mm
+            if (timeStr.Contains(":") && timeStr.Split(':').Length == 2)
+            {
+                return DateTime.ParseExact(timeStr, "HH:mm", null).ToString("hh:mm:ss tt");
+            }
+            return timeStr;
+        }
+        catch
+        {
+            return timeStr;
         }
     }
 

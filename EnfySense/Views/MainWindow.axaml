@@ -428,7 +428,7 @@
                     <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
                        <StackPanel Orientation="Horizontal" Spacing="4">
                           <PathIcon Data="{StaticResource clock_regular}" Width="10" Height="10" Foreground="#10B981" />
-                          <TextBlock Text="CLOCKED IN" Classes="label" FontSize="9" FontWeight="Bold" />
+                          <TextBlock Text="LOGGED IN (FIRST LOGIN)" Classes="label" FontSize="9" FontWeight="Bold" />
                        </StackPanel>
                        <TextBlock Text="{Binding ClockInDisplay}" Foreground="White" FontSize="18" FontWeight="Bold" />
                     </StackPanel>
@@ -437,7 +437,7 @@
                     <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
                        <StackPanel Orientation="Horizontal" Spacing="4">
                           <PathIcon Data="{StaticResource arrow_circle_right_regular}" Width="10" Height="10" Foreground="#94A3B8" />
-                          <TextBlock Text="CLOCKED OUT" Classes="label" FontSize="9" FontWeight="Bold" />
+                          <TextBlock Text="SIGNED OUT" Classes="label" FontSize="9" FontWeight="Bold" />
                        </StackPanel>
                        <TextBlock Text="{Binding ClockOutDisplay}" Foreground="White" FontSize="18" FontWeight="Bold" />
                     </StackPanel>
