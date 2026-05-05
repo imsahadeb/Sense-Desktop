@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using System.IO;
 
 namespace EnfyLiveScreenClient.ViewModels;
 
@@ -1155,6 +1157,40 @@ public partial class MainWindowViewModel : ViewModelBase
         StatusMessage = policy.MaintenanceMode 
             ? "Server is currently in maintenance mode." 
             : "Policy updated.";
+    }
+
+    [RelayCommand]
+    private void RequestUninstall()
+    {
+        if (!IsAdminMode)
+        {
+            StatusMessage = "Admin access required for uninstallation.";
+            return;
+        }
+
+        try
+        {
+            var appPath = AppDomain.CurrentDomain.BaseDirectory;
+            var uninstaller = Path.Combine(appPath, "unins000.exe");
+
+            if (File.Exists(uninstaller))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = uninstaller,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                StatusMessage = "Uninstaller not found. Please use Windows Control Panel.";
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log("Failed to launch uninstaller", LogLevel.Error, ex);
+            StatusMessage = "Failed to launch uninstaller.";
+        }
     }
 
     private async Task UnlockAdminAsync()

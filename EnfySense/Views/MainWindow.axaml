@@ -136,6 +136,11 @@
                     <PathIcon Data="{StaticResource stop_regular}" Foreground="#EF4444" Width="14" Height="14" />
                   </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="Uninstall App" Command="{Binding RequestUninstallCommand}" Foreground="#EF4444" IsVisible="{Binding IsAdminMode}">
+                  <MenuItem.Icon>
+                    <PathIcon Data="{StaticResource stop_regular}" Foreground="#EF4444" Width="14" Height="14" />
+                  </MenuItem.Icon>
+                </MenuItem>
                 <Separator IsVisible="{Binding !IsAdminMode}" />
                 <MenuItem Header="Unlock Admin Mode" Command="{Binding UnlockAdminCommand}" IsVisible="{Binding !IsAdminMode}">
                   <MenuItem.Icon>
@@ -710,17 +715,33 @@
                   <TextBlock Text="Continue with Microsoft" FontWeight="Bold" />
                 </StackPanel>
               </Button>
-              <TextBlock Text="{Binding StatusMessage}" Foreground="#EF4444" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" />
-              <Button Command="{Binding UnlockAdminCommand}" 
-                      IsVisible="{Binding !IsAdminMode}"
-                      Background="Transparent" 
-                      HorizontalAlignment="Center"
-                      Padding="10">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <PathIcon Data="{StaticResource lock_regular}" Width="12" Height="12" Foreground="#64748B" />
-                  <TextBlock Text="Unlock Admin Access" FontSize="12" Foreground="#64748B" FontWeight="SemiBold" />
-                </StackPanel>
-              </Button>
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#EF4444" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" />
+                
+                <!-- Unlock Button (Logged Out Mode) -->
+                <Button Command="{Binding UnlockAdminCommand}" 
+                        IsVisible="{Binding !IsAdminMode}"
+                        Background="Transparent" 
+                        HorizontalAlignment="Center"
+                        Padding="10">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <PathIcon Data="{StaticResource lock_regular}" Width="12" Height="12" Foreground="#64748B" />
+                    <TextBlock Text="Unlock Admin Access" FontSize="12" Foreground="#64748B" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Button>
+
+                <!-- Uninstall Button (Logged Out Mode - Only after Unlock) -->
+                <Button Command="{Binding RequestUninstallCommand}" 
+                        IsVisible="{Binding IsAdminMode}"
+                        Background="Transparent" 
+                        HorizontalAlignment="Center"
+                        Padding="10">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <PathIcon Data="{StaticResource stop_regular}" Width="12" Height="12" Foreground="#EF4444" />
+                    <TextBlock Text="Uninstall EnfySense" FontSize="12" Foreground="#EF4444" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Button>
+              </StackPanel>
             </StackPanel>
          </Border>
        </StackPanel>
