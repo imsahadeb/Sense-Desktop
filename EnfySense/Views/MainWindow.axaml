@@ -337,11 +337,11 @@
                           <TextBlock Text="{Binding BreakTodayDisplay}" Foreground="White" FontSize="16" FontWeight="Bold" />
                        </StackPanel>
                     </Border>
-                    <Border Grid.Column="1" Background="#33581C87" BorderBrush="#7E22CE" BorderThickness="1" CornerRadius="10" Padding="12">
+                    <Border Grid.Column="1" Background="#33F43F5E" BorderBrush="#F43F5E" BorderThickness="1" CornerRadius="10" Padding="12">
                        <StackPanel Spacing="2">
                           <StackPanel Orientation="Horizontal" Spacing="6">
-                             <PathIcon Data="{StaticResource arrow_circle_up_regular}" Width="10" Height="10" Foreground="#A855F7" />
-                             <TextBlock Text="OVERTIME" Classes="label" FontSize="9" FontWeight="Bold" Foreground="#A855F7" />
+                             <PathIcon Data="{StaticResource arrow_circle_up_regular}" Width="10" Height="10" Foreground="#F43F5E" />
+                             <TextBlock Text="OVERTIME" Classes="label" FontSize="9" FontWeight="Bold" Foreground="#F43F5E" />
                           </StackPanel>
                           <TextBlock Text="{Binding OvertimeTodayDisplay}" Foreground="White" FontSize="16" FontWeight="Bold" />
                        </StackPanel>
@@ -385,15 +385,16 @@
                       <TextBlock Grid.Column="1" Text="12ms" Foreground="White" FontSize="14" FontWeight="Bold" FontFamily="Courier New" VerticalAlignment="Center" />
                    </Grid>
                    
-                   <StackPanel Spacing="8">
+                   <StackPanel Spacing="6">
                       <ProgressBar Value="98" Height="6" CornerRadius="3" Background="#1E293B" Foreground="#10B981" />
-                      <Grid ColumnDefinitions="*, Auto">
-                         <TextBlock Text="Security: AES-256 Encrypted" Foreground="#475569" FontSize="10" FontStyle="Italic" />
-                         <StackPanel Orientation="Horizontal" Spacing="4">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                         <TextBlock Text="AES-256 Encrypted" Foreground="#475569" FontSize="10" FontStyle="Italic" />
+                         <Separator Width="1" Background="Transparent" />
+                         <StackPanel Orientation="Horizontal" Spacing="4" Margin="auto,0,0,0">
                             <TextBlock Text="Last sync:" Classes="label" FontSize="10" />
                             <TextBlock Text="{Binding LastSyncDisplay}" Foreground="#94A3B8" FontSize="10" FontWeight="Bold" />
                          </StackPanel>
-                      </Grid>
+                      </StackPanel>
                    </StackPanel>
                 </StackPanel>
               </StackPanel>
@@ -435,6 +436,10 @@
                    <StackPanel>
                       <TextBlock Text="LAST 7 DAYS" Classes="label" FontSize="9" FontWeight="Bold" />
                       <TextBlock Text="{Binding Last7DaysDisplay}" FontSize="24" FontWeight="Bold" />
+                      <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                         <TextBlock Text="Break:" Foreground="#64748B" FontSize="10" />
+                         <TextBlock Text="{Binding Last7DaysBreakDisplay}" Foreground="#F59E0B" FontSize="11" FontWeight="SemiBold" />
+                      </StackPanel>
                    </StackPanel>
                 </StackPanel>
              </Border>
@@ -444,6 +449,10 @@
                    <StackPanel>
                       <TextBlock Text="LAST 30 DAYS" Classes="label" FontSize="9" FontWeight="Bold" />
                       <TextBlock Text="{Binding Last30DaysDisplay}" FontSize="24" FontWeight="Bold" />
+                      <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                         <TextBlock Text="Break:" Foreground="#64748B" FontSize="10" />
+                         <TextBlock Text="{Binding Last30DaysBreakDisplay}" Foreground="#F59E0B" FontSize="11" FontWeight="SemiBold" />
+                      </StackPanel>
                    </StackPanel>
                 </StackPanel>
              </Border>
@@ -453,6 +462,10 @@
                    <StackPanel>
                       <TextBlock Text="AVG/DAY" Classes="label" FontSize="9" FontWeight="Bold" />
                       <TextBlock Text="{Binding AvgPerDayDisplay}" FontSize="24" FontWeight="Bold" />
+                      <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                         <TextBlock Text="Break:" Foreground="#64748B" FontSize="10" />
+                         <TextBlock Text="{Binding AvgPerDayBreakDisplay}" Foreground="#F59E0B" FontSize="11" FontWeight="SemiBold" />
+                      </StackPanel>
                    </StackPanel>
                 </StackPanel>
              </Border>
@@ -462,6 +475,10 @@
                    <StackPanel>
                       <TextBlock Text="TODAY" Classes="label" FontSize="9" FontWeight="Bold" />
                       <TextBlock Text="{Binding TodayHoursDisplay}" FontSize="24" FontWeight="Bold" />
+                      <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                         <TextBlock Text="Break:" Foreground="#64748B" FontSize="10" />
+                         <TextBlock Text="{Binding TodaySummaryBreakDisplay}" Foreground="#F59E0B" FontSize="11" FontWeight="SemiBold" />
+                      </StackPanel>
                    </StackPanel>
                 </StackPanel>
              </Border>

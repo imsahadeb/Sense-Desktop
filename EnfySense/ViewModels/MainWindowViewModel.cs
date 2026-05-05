@@ -136,16 +136,28 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _activityLevel = "0%";
 
     [ObservableProperty]
-    private string _last7DaysDisplay = "0.0h";
+    private string _last7DaysDisplay = "0h 0m";
 
     [ObservableProperty]
-    private string _last30DaysDisplay = "0.0h";
+    private string _last7DaysBreakDisplay = "0h 0m";
 
     [ObservableProperty]
-    private string _avgPerDayDisplay = "0.0h";
+    private string _last30DaysDisplay = "0h 0m";
 
     [ObservableProperty]
-    private string _todayHoursDisplay = "0.0h";
+    private string _last30DaysBreakDisplay = "0h 0m";
+
+    [ObservableProperty]
+    private string _avgPerDayDisplay = "0h 0m";
+
+    [ObservableProperty]
+    private string _avgPerDayBreakDisplay = "0h 0m";
+
+    [ObservableProperty]
+    private string _todayHoursDisplay = "0h 0m";
+
+    [ObservableProperty]
+    private string _todaySummaryBreakDisplay = "0h 0m";
 
     [ObservableProperty]
     private string _statusText = "IDLE";
@@ -364,9 +376,13 @@ public partial class MainWindowViewModel : ViewModelBase
                     ActivityLevel = $"{dashboard.ActivityLevel}%";
                     BreaksCount = FormatSimpleTime(dashboard.Today.BreakTimeSeconds);
                     Last7DaysDisplay = dashboard.Last7DaysWorkHours;
+                    Last7DaysBreakDisplay = dashboard.Last7DaysBreakHours;
                     Last30DaysDisplay = dashboard.Last30DaysWorkHours;
+                    Last30DaysBreakDisplay = dashboard.Last30DaysBreakHours;
                     AvgPerDayDisplay = dashboard.AvgPerDayWorkHours;
+                    AvgPerDayBreakDisplay = dashboard.AvgPerDayBreakHours;
                     TodayHoursDisplay = dashboard.TodayWorkHours;
+                    TodaySummaryBreakDisplay = dashboard.TodayBreakHours;
                     TimezoneDisplay = dashboard.Timezone;
                     OrgNameDisplay = dashboard.OrgName;
 
@@ -463,10 +479,14 @@ public partial class MainWindowViewModel : ViewModelBase
         public TodayStatsResponse Week { get; set; } = new();
         public TodayStatsResponse Month { get; set; } = new();
         public int ActivityLevel { get; set; }
-        public string Last7DaysWorkHours { get; set; } = "0.0h";
-        public string Last30DaysWorkHours { get; set; } = "0.0h";
-        public string AvgPerDayWorkHours { get; set; } = "0.0h";
-        public string TodayWorkHours { get; set; } = "0.0h";
+        public string Last7DaysWorkHours { get; set; } = "0h 0m";
+        public string Last7DaysBreakHours { get; set; } = "0h 0m";
+        public string Last30DaysWorkHours { get; set; } = "0h 0m";
+        public string Last30DaysBreakHours { get; set; } = "0h 0m";
+        public string AvgPerDayWorkHours { get; set; } = "0h 0m";
+        public string AvgPerDayBreakHours { get; set; } = "0h 0m";
+        public string TodayWorkHours { get; set; } = "0h 0m";
+        public string TodayBreakHours { get; set; } = "0h 0m";
         public List<HourStats> HourlyData { get; set; } = new();
         public List<ActivityHistoryResponse> DailyData { get; set; } = new();
         public string Timezone { get; set; } = "Asia/Calcutta";
@@ -531,14 +551,46 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             var currentSession = DateTime.UtcNow - _trackingStartedAt.Value;
             if (IsPaused) totalBreak += currentSession;
-            else if (currentUtcHour >= 14 && currentUtcHour < 23) totalWork += currentSession;
-            else totalOvertime += currentSession;
+            else 
+            {
+                // Calculate 8h split live
+                TimeSpan dayGoal = TimeSpan.FromHours(8);
+                TimeSpan currentTotalWork = _workTodayAccumulated + _overtimeTodayAccumulated + currentSession;
+                
+                if (currentTotalWork > dayGoal)
+                {
+                    totalWork = dayGoal;
+                    totalOvertime = currentTotalWork - dayGoal;
+                }
+                else
+                {
+                    totalWork = currentTotalWork;
+                    totalOvertime = TimeSpan.Zero;
+                }
+            }
+        }
+        else
+        {
+            // Calculate 8h split from accumulated
+            TimeSpan dayGoal = TimeSpan.FromHours(8);
+            TimeSpan currentTotalWork = _workTodayAccumulated + _overtimeTodayAccumulated;
+            if (currentTotalWork > dayGoal)
+            {
+                totalWork = dayGoal;
+                totalOvertime = currentTotalWork - dayGoal;
+            }
+            else
+            {
+                totalWork = currentTotalWork;
+                totalOvertime = TimeSpan.Zero;
+            }
         }
         
         WorkTodayDisplay = FormatTimeSpan(totalWork + totalOvertime);
         OvertimeTodayDisplay = FormatTimeSpan(totalOvertime);
         BreakTodayDisplay = FormatTimeSpan(totalBreak);
-        TodayHoursDisplay = FormatTimeSpan(totalWork + totalOvertime);
+        TodayHoursDisplay = FormatTimeSpanShort(totalWork + totalOvertime);
+        TodaySummaryBreakDisplay = FormatTimeSpanShort(totalBreak);
 
         // Update Status Badge
         if (!IsTrackingActive)
@@ -597,6 +649,11 @@ public partial class MainWindowViewModel : ViewModelBase
                 _ = FetchActivityHistoryAsync();
             }
         }
+    }
+
+    private string FormatTimeSpanShort(TimeSpan ts)
+    {
+        return $"{(int)ts.TotalHours}h {ts.Minutes}m";
     }
 
     private string FormatTimeSpan(TimeSpan ts)
@@ -880,14 +937,20 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else
             {
-                int utcHour = DateTime.UtcNow.Hour;
-                if (utcHour >= 14 && utcHour < 23)
+                // 8-Hour Rule: Add to total work first, then split
+                TimeSpan dayGoal = TimeSpan.FromHours(8);
+                TimeSpan existingTotal = _workTodayAccumulated + _overtimeTodayAccumulated;
+                TimeSpan newTotal = existingTotal + session;
+
+                if (newTotal > dayGoal)
                 {
-                    _workTodayAccumulated += session;
+                    _workTodayAccumulated = dayGoal;
+                    _overtimeTodayAccumulated = newTotal - dayGoal;
                 }
                 else
                 {
-                    _overtimeTodayAccumulated += session;
+                    _workTodayAccumulated = newTotal;
+                    _overtimeTodayAccumulated = TimeSpan.Zero;
                 }
             }
         }
@@ -926,14 +989,20 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else
             {
-                int utcHour = DateTime.UtcNow.Hour;
-                if (utcHour >= 14 && utcHour < 23)
+                // 8-Hour Rule: Add to total work first, then split
+                TimeSpan dayGoal = TimeSpan.FromHours(8);
+                TimeSpan existingTotal = _workTodayAccumulated + _overtimeTodayAccumulated;
+                TimeSpan newTotal = existingTotal + session;
+
+                if (newTotal > dayGoal)
                 {
-                    _workTodayAccumulated += session;
+                    _workTodayAccumulated = dayGoal;
+                    _overtimeTodayAccumulated = newTotal - dayGoal;
                 }
                 else
                 {
-                    _overtimeTodayAccumulated += session;
+                    _workTodayAccumulated = newTotal;
+                    _overtimeTodayAccumulated = TimeSpan.Zero;
                 }
             }
         }
