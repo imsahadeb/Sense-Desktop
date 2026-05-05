@@ -367,8 +367,11 @@ public partial class MainWindowViewModel : ViewModelBase
                     // 2. Update Daily Chart (Last 30 Days)
                     DailyActivityItems.Clear();
                     DailyYAxisLabels.Clear();
+                    // Stabilize scale: Use 8h as baseline, or the max if it exceeds 8h
                     double dailyMax = dashboard.DailyData.Any() ? dashboard.DailyData.Max(h => h.WorkTimeSeconds + h.OvertimeSeconds + h.BreakTimeSeconds) : 0;
                     if (dailyMax < 8 * 3600) dailyMax = 8 * 3600; 
+                    // Round up to nearest 2 hours for stable labels
+                    dailyMax = Math.Ceiling(dailyMax / 7200.0) * 7200.0;
                     double dailyScale = 140.0 / dailyMax;
 
                     // Populate Daily Y Labels
@@ -396,8 +399,8 @@ public partial class MainWindowViewModel : ViewModelBase
                     // 3. Update Hourly Chart (Today)
                     HourlyActivityItems.Clear();
                     HourlyYAxisLabels.Clear();
-                    double hourlyMax = dashboard.HourlyData.Any() ? dashboard.HourlyData.Max(h => h.WorkTimeSeconds + h.OvertimeSeconds + h.BreakTimeSeconds) : 0;
-                    if (hourlyMax < 3600) hourlyMax = 3600; 
+                    // Stabilize scale: Hourly buckets can never exceed 3600s
+                    double hourlyMax = 3600; 
                     double hourlyScale = 140.0 / hourlyMax;
 
                     // Populate Hourly Y Labels
