@@ -176,7 +176,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _statusColor = "#94A3B8";
 
     [ObservableProperty]
-    private string _orgNameDisplay = "enfycon";
+    private string _orgNameDisplay = "enfycon Inc";
 
     [ObservableProperty]
     private bool _isWidgetActive = false;
