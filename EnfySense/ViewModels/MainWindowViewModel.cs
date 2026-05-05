@@ -213,35 +213,38 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task AcceptTerms()
     {
-        if (_authSession == null) return;
-
         try
         {
             IsBusy = true;
             StatusMessage = "Recording your acceptance...";
-            var success = await _authApiClient.AcceptTermsAsync(BackendUrl, _authSession.AccessToken);
+            
+            // Bypass API for now as per user request
+            // var success = await _authApiClient.AcceptTermsAsync(BackendUrl, _authSession?.AccessToken ?? "");
+            bool success = true;
+
             if (success)
             {
                 IsTermsVisible = false;
                 _config.TermsAccepted = true;
                 _config.Save();
                 
-                StatusMessage = "Acceptance recorded. Welcome to EnfySense.";
+                if (_authSession?.User != null)
+                {
+                    _authSession.User.TermsAccepted = true;
+                }
+
+                StatusMessage = "Acceptance recorded locally. Welcome to EnfySense.";
                 
                 if (AutoConnect)
                 {
                     await ConnectAsync();
                 }
             }
-            else
-            {
-                StatusMessage = "Failed to record terms acceptance. Please try again.";
-            }
         }
         catch (Exception ex)
         {
             AppLogger.Log($"AcceptTerms error: {ex.Message}");
-            StatusMessage = $"Error recording acceptance: {GetFriendlyErrorMessage(ex)}";
+            StatusMessage = $"Error recording acceptance: {ex.Message}";
         }
         finally
         {
@@ -834,7 +837,7 @@ public partial class MainWindowViewModel : ViewModelBase
             StatusMessage = "Microsoft sign-in completed successfully.";
 
             // Check if user needs to accept terms
-            if (!_authSession.User.TermsAccepted)
+            if (!_authSession.User.TermsAccepted && !_config.TermsAccepted)
             {
                 IsTermsVisible = true;
                 StatusMessage = "Please review and accept the Company Usage Disclosure.";
@@ -1307,7 +1310,7 @@ public partial class MainWindowViewModel : ViewModelBase
             IsAuthenticated = true;
 
             // Check if user needs to accept terms
-            if (!_authSession.User.TermsAccepted)
+            if (!_authSession.User.TermsAccepted && !_config.TermsAccepted)
             {
                 IsTermsVisible = true;
                 StatusMessage = "Please review and accept the Company Usage Disclosure.";
