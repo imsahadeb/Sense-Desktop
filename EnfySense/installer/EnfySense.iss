@@ -49,8 +49,8 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-SetupIconFile=logo.ico
-WizardSmallImageFile=logo_small.bmp
+; SetupIconFile=logo.ico
+; WizardSmallImageFile=logo_small.bmp
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Registry]
@@ -113,12 +113,55 @@ end;
 
 function InitializeUninstall(): Boolean;
 var
+  Form: TSetupForm;
+  OKButton, CancelButton: TNewButton;
+  Edit: TNewEdit;
+  PromptLabel: TLabel;
   Code: String;
   ResultCode: Integer;
 begin
   Result := False;
-  if InputQuery('Admin Verification Required', 'This application is protected. Enter the 6-digit Admin TOTP code to proceed with uninstallation:', Code) then
+  
+  Form := TSetupForm.Create(nil);
+  Form.ClientWidth := 380;
+  Form.ClientHeight := 160;
+  Form.Caption := 'Admin Verification Required';
+  Form.Position := poScreenCenter;
+
+  PromptLabel := TLabel.Create(Form);
+  PromptLabel.Parent := Form;
+  PromptLabel.AutoSize := True;
+  PromptLabel.Left := 20;
+  PromptLabel.Top := 20;
+  PromptLabel.Caption := 'This application is protected. Enter the 6-digit Admin TOTP code' + #13#10 + 'to proceed with uninstallation:';
+
+  Edit := TNewEdit.Create(Form);
+  Edit.Parent := Form;
+  Edit.Left := 20;
+  Edit.Top := PromptLabel.Top + PromptLabel.Height + 15;
+  Edit.Width := Form.ClientWidth - 40;
+  Edit.PasswordChar := '*';
+
+  OKButton := TNewButton.Create(Form);
+  OKButton.Parent := Form;
+  OKButton.Caption := 'OK';
+  OKButton.Default := True;
+  OKButton.ModalResult := mrOk;
+  OKButton.Left := Form.ClientWidth - 2 * (80 + 10);
+  OKButton.Top := Form.ClientHeight - 35 - 10;
+  OKButton.Width := 80;
+
+  CancelButton := TNewButton.Create(Form);
+  CancelButton.Parent := Form;
+  CancelButton.Caption := 'Cancel';
+  CancelButton.ModalResult := mrCancel;
+  CancelButton.Left := Form.ClientWidth - (80 + 10);
+  CancelButton.Top := OKButton.Top;
+  CancelButton.Width := 80;
+
+  if Form.ShowModal() = mrOk then
   begin
+    Code := Edit.Text;
     if Code = '' then
     begin
       MsgBox('Verification code cannot be empty.', mbError, MB_OK);
