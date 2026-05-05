@@ -19,6 +19,7 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             desktop.MainWindow = new MainWindow
             {
                 DataContext = new MainWindowViewModel(),

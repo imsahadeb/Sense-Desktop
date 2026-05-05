@@ -13,6 +13,15 @@ public partial class SenseWidget : Window
     {
         InitializeComponent();
         Deactivated += SenseWidget_Deactivated;
+
+        Closing += (s, e) => {
+            if (DataContext is ViewModels.MainWindowViewModel vm && !vm.IsAdminMode)
+            {
+                e.Cancel = true;
+                // If they try to close the widget, just re-show it (it's already showing anyway)
+                this.Show();
+            }
+        };
         
         // Periodically re-assert topmost status to handle aggressive apps like Terminal
         var timer = new DispatcherTimer
