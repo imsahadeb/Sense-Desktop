@@ -440,7 +440,7 @@ public sealed class AuthUserInfo
     public string Email { get; init; } = string.Empty;
     public string? FullName { get; init; }
     public string[] Roles { get; init; } = Array.Empty<string>();
-    public bool TermsAccepted { get; init; }
+    public bool TermsAccepted { get; set; }
 
 
     [JsonIgnore]
