@@ -619,34 +619,29 @@ public partial class MainWindowViewModel : ViewModelBase
             StatusColor = "#10B981";
         }
 
-        // Update Widget display
-        if (currentUtcHour >= 14 && currentUtcHour < 23)
+        // Update Widget display (8-Hour Rule)
+        TimeSpan dayGoal = TimeSpan.FromHours(8);
+        if (totalWork <= dayGoal)
         {
             WidgetTimeDisplay = totalWork.ToString(@"hh\:mm\:ss");
             WidgetStatusColor = IsPaused ? "#F59E0B" : "#10B981"; // Yellow if break, Green if work
         }
         else
         {
+            // If we are over 8 hours, show total overtime in the widget
             WidgetTimeDisplay = totalOvertime.ToString(@"hh\:mm\:ss");
             WidgetStatusColor = IsPaused ? "#F59E0B" : "#EF4444"; // Yellow if break, Red if overtime
         }
 
-        var nowUtc = DateTime.UtcNow;
-        var shiftEndUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 23, 0, 0, DateTimeKind.Utc);
-        
-        if (nowUtc > shiftEndUtc)
+        // Update Time Remaining (Countdown to 8h Goal)
+        if (totalWork < dayGoal)
         {
-            shiftEndUtc = shiftEndUtc.AddDays(1);
-        }
-
-        var remaining = shiftEndUtc - nowUtc;
-        if (currentUtcHour >= 14 && currentUtcHour < 23)
-        {
-            TimeRemainingToClose = $"{remaining.Hours}h {remaining.Minutes}m {remaining.Seconds}s remaining";
+            var remainingToGoal = dayGoal - totalWork;
+            TimeRemainingToClose = $"{remainingToGoal.Hours}h {remainingToGoal.Minutes}m until 8h goal";
         }
         else
         {
-            TimeRemainingToClose = "Shift Closed";
+            TimeRemainingToClose = "Daily Goal Reached (Overtime)";
         }
 
         if (IsConnected && _agent != null)
