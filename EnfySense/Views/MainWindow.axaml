@@ -203,6 +203,14 @@
               </StackPanel>
               <TextBlock Text="{Binding OvertimeTodayDisplay}" FontSize="20" Foreground="#F8FAFC" FontWeight="Bold" />
             </StackPanel>
+
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4">
+                <PathIcon Data="{StaticResource pause_regular}" Width="12" Height="12" Foreground="#F59E0B" />
+                <TextBlock Text="BREAK TODAY" FontSize="10" Foreground="#64748B" FontWeight="Bold" LetterSpacing="0.5" />
+              </StackPanel>
+              <TextBlock Text="{Binding BreakTodayDisplay}" FontSize="20" Foreground="#F8FAFC" FontWeight="Bold" />
+            </StackPanel>
           </StackPanel>
 
           <!-- Column 3: Action Buttons -->
@@ -305,7 +313,7 @@
                        </Border>
                        <TextBlock Text="WORK TIME TRACKING" Classes="label" VerticalAlignment="Center" FontWeight="Bold" />
                     </StackPanel>
-                    <!-- Current State Badge -->
+                    <!-- Status Badge -->
                     <Border Grid.Column="1" Padding="8,4" CornerRadius="6" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
                        <StackPanel Orientation="Horizontal" Spacing="6">
                           <Ellipse Width="6" Height="6" Fill="{Binding StatusColor}" Classes="pulse" />
@@ -319,8 +327,8 @@
                     <TextBlock Text="Total Worked Today (Inc. Overtime)" Classes="label" FontSize="11" />
                  </StackPanel>
 
-                 <Grid ColumnDefinitions="*, *" RowDefinitions="Auto">
-                    <Border Grid.Column="0" Background="#1E293B" CornerRadius="10" Padding="12" Margin="0,0,6,0">
+                 <Grid ColumnDefinitions="*, *" ColumnSpacing="12">
+                    <Border Grid.Column="0" Background="#1E293B" CornerRadius="10" Padding="12">
                        <StackPanel Spacing="2">
                           <StackPanel Orientation="Horizontal" Spacing="6">
                              <PathIcon Data="{StaticResource pause_regular}" Width="10" Height="10" Foreground="#F59E0B" />
@@ -329,7 +337,7 @@
                           <TextBlock Text="{Binding BreakTodayDisplay}" Foreground="White" FontSize="16" FontWeight="Bold" />
                        </StackPanel>
                     </Border>
-                    <Border Grid.Column="1" Background="#33581C87" BorderBrush="#7E22CE" BorderThickness="1" CornerRadius="10" Padding="12" Margin="6,0,0,0">
+                    <Border Grid.Column="1" Background="#33581C87" BorderBrush="#7E22CE" BorderThickness="1" CornerRadius="10" Padding="12">
                        <StackPanel Spacing="2">
                           <StackPanel Orientation="Horizontal" Spacing="6">
                              <PathIcon Data="{StaticResource arrow_circle_up_regular}" Width="10" Height="10" Foreground="#A855F7" />
@@ -371,22 +379,22 @@
                    </Border>
                 </Grid>
 
-                <StackPanel Spacing="12">
+                <StackPanel Spacing="16">
                    <Grid ColumnDefinitions="*, Auto">
-                      <TextBlock Text="System Latency" Classes="label" FontSize="12" />
-                      <TextBlock Text="12ms" Foreground="White" FontSize="12" FontWeight="Bold" FontFamily="Courier New" />
+                      <TextBlock Text="System Latency" Classes="label" FontSize="12" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Text="12ms" Foreground="White" FontSize="14" FontWeight="Bold" FontFamily="Courier New" VerticalAlignment="Center" />
                    </Grid>
-                   <!-- Health Bar -->
-                   <Border Height="4" CornerRadius="2" Background="#1E293B" ClipToBounds="True">
-                      <Border HorizontalAlignment="Left" Width="180" Background="#10B981" CornerRadius="2" />
-                   </Border>
-                   <Grid ColumnDefinitions="*, Auto">
-                      <TextBlock Text="Security: AES-256 Encrypted" Foreground="#475569" FontSize="10" FontStyle="Italic" />
-                      <StackPanel Orientation="Horizontal" Spacing="4">
-                         <TextBlock Text="Last sync:" Classes="label" FontSize="10" />
-                         <TextBlock Text="{Binding LastSyncDisplay}" Foreground="#94A3B8" FontSize="10" FontWeight="Bold" />
-                      </StackPanel>
-                   </Grid>
+                   
+                   <StackPanel Spacing="8">
+                      <ProgressBar Value="98" Height="6" CornerRadius="3" Background="#1E293B" Foreground="#10B981" />
+                      <Grid ColumnDefinitions="*, Auto">
+                         <TextBlock Text="Security: AES-256 Encrypted" Foreground="#475569" FontSize="10" FontStyle="Italic" />
+                         <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="Last sync:" Classes="label" FontSize="10" />
+                            <TextBlock Text="{Binding LastSyncDisplay}" Foreground="#94A3B8" FontSize="10" FontWeight="Bold" />
+                         </StackPanel>
+                      </Grid>
+                   </StackPanel>
                 </StackPanel>
               </StackPanel>
             </Border>
