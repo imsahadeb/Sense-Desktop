@@ -1,4 +1,4 @@
-#define MyAppId "{{64D4FA90-13D1-4EA5-901A-0F2CC3C44C80}}"
+#define MyAppId "{64D4FA90-13D1-4EA5-901A-0F2CC3C44C80}"
 #define MyAppName "EnfySense"
 #define MyAppExeName "EnfySense.exe"
 
@@ -26,7 +26,7 @@
 #endif
 
 [Setup]
-AppId={#MyAppId}
+AppId={{#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -40,8 +40,7 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-PrivilegesRequired=none
-PrivilegesRequiredOverridesAllowed=dialog
+PrivilegesRequired=admin
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Registry]
@@ -96,6 +95,34 @@ begin
     '}';
 
   SaveStringToFile(ConfigPath, ConfigJson, False);
+end;
+
+function InitializeUninstall(): Boolean;
+var
+  Code: String;
+  ResultCode: Integer;
+begin
+  Result := False;
+  if InputQuery('Admin Verification Required', 'This application is protected. Enter the 6-digit Admin TOTP code to proceed with uninstallation:', Code) then
+  begin
+    if Code = '' then
+    begin
+      MsgBox('Verification code cannot be empty.', mbError, MB_OK);
+      exit;
+    end;
+
+    // Call the app's EXE with the verify-totp flag. 
+    // The EXE is still present in {app} during InitializeUninstall.
+    if Exec(ExpandConstant('{app}\{#MyAppExeName}'), '--verify-totp ' + Code, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    begin
+      if ResultCode = 0 then
+        Result := True
+      else
+        MsgBox('Invalid verification code. Uninstallation aborted.', mbError, MB_OK);
+    end
+    else
+      MsgBox('Failed to verify code (could not launch verification utility).', mbError, MB_OK);
+  end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

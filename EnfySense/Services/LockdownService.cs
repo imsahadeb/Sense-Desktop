@@ -146,7 +146,8 @@ public sealed class LockdownService
     public void ApplyHardening()
     {
         // On startup, ensure we are hidden from Control Panel
-        EnableStealthMode();
+        // Disabled per user request to allow visibility in the "Installed Apps" list (but uninstallation is locked via TOTP).
+        // EnableStealthMode();
         
         // Ensure we start on next boot
         EnableAutoStart();

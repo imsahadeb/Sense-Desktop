@@ -49,6 +49,7 @@ public sealed class AppConfig
     public string KeycloakIssuer { get; set; } = "https://auth.enfycon.com/realms/submission_tracker";
     public string KeycloakClientId { get; set; } = "submission_tracker_app";
     public bool RememberMe { get; set; } = true;
+    public bool TermsAccepted { get; set; } = false;
     public AuthSession? LastSession { get; set; }
 
     /// <summary>

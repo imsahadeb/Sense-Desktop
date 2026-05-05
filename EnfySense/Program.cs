@@ -24,6 +24,14 @@ internal static class Program
                 return;
             }
 
+            // Handle command line arguments for uninstaller verification
+            if (args.Length >= 2 && args[0] == "--verify-totp")
+            {
+                string code = args[1];
+                bool isValid = AdminSecurityService.Instance.VerifyCode(code);
+                Environment.Exit(isValid ? 0 : 1);
+            }
+
             // It's important to run Velopack as early as possible in your App startup.
             VelopackApp.Build().Run();
 

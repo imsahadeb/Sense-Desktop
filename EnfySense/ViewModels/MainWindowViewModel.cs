@@ -208,6 +208,45 @@ public partial class MainWindowViewModel : ViewModelBase
         _ = UnlockAdminAsync();
     }
 
+    [RelayCommand]
+    private async Task AcceptTerms()
+    {
+        if (_authSession == null) return;
+
+        try
+        {
+            IsBusy = true;
+            StatusMessage = "Recording your acceptance...";
+            var success = await _authApiClient.AcceptTermsAsync(BackendUrl, _authSession.AccessToken);
+            if (success)
+            {
+                IsTermsVisible = false;
+                _config.TermsAccepted = true;
+                _config.Save();
+                
+                StatusMessage = "Acceptance recorded. Welcome to EnfySense.";
+                
+                if (AutoConnect)
+                {
+                    await ConnectAsync();
+                }
+            }
+            else
+            {
+                StatusMessage = "Failed to record terms acceptance. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"AcceptTerms error: {ex.Message}");
+            StatusMessage = $"Error recording acceptance: {GetFriendlyErrorMessage(ex)}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     [ObservableProperty]
     private string _lastSyncDisplay = "Never";
 
@@ -239,7 +278,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsOverlayActive))]
     private bool _showFinishConfirmation = false;
 
-    public bool IsOverlayActive => ShowFinishConfirmation || IsApplyingUpdate;
+    [ObservableProperty]
+    private bool _isTermsVisible;
+
+    public bool IsOverlayActive => ShowFinishConfirmation || IsApplyingUpdate || IsTermsVisible;
 
     public bool IsTrackingStopped => !IsTrackingActive;
     public bool IsNotPaused => !IsPaused;
@@ -260,7 +302,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public string LogFilePath => AppLogger.CurrentLogFilePath;
     public bool CanLogin => !IsAuthenticated && !IsBusy;
     public bool CanLogout => IsAuthenticated && !IsBusy;
-    public bool CanConnect => IsAuthenticated && !IsConnected && !IsBusy;
+    public bool CanConnect => IsAuthenticated && !IsConnected && !IsBusy && !IsTermsVisible;
     public bool CanDisconnect => IsConnected && !IsBusy;
 
     public MainWindowViewModel()
@@ -696,6 +738,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task Logout()
     {
+        if (!IsAdminMode)
+        {
+            StatusMessage = "Admin access required to log out.";
+            return;
+        }
+
         try
         {
             await Disconnect();
@@ -721,6 +769,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ExitApp()
     {
+        if (!IsAdminMode)
+        {
+            StatusMessage = "Admin access required to exit the application.";
+            return;
+        }
+
         if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Shutdown();
@@ -777,15 +831,23 @@ public partial class MainWindowViewModel : ViewModelBase
             AuthStatus = "Signed in with Microsoft";
             StatusMessage = "Microsoft sign-in completed successfully.";
 
+            // Check if user needs to accept terms
+            if (!_authSession.User.TermsAccepted)
+            {
+                IsTermsVisible = true;
+                StatusMessage = "Please review and accept the Company Usage Disclosure.";
+            }
+
             if (_config.RememberMe)
             {
                 _config.LastSession = _authSession;
+                _config.TermsAccepted = _authSession.User.TermsAccepted;
                 _config.Save();
             }
 
             _ = SyncAdminSecretsAsync();
 
-            if (AutoConnect)
+            if (AutoConnect && !IsTermsVisible)
             {
                 await ConnectAsync();
             }
@@ -808,6 +870,12 @@ public partial class MainWindowViewModel : ViewModelBase
         if (!IsAuthenticated)
         {
             StatusMessage = "Sign in with Microsoft before connecting the client.";
+            return;
+        }
+
+        if (IsTermsVisible)
+        {
+            StatusMessage = "Please accept the usage disclosure before connecting.";
             return;
         }
 
@@ -908,6 +976,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void StartTracking()
     {
+        if (IsTermsVisible) return;
         if (IsTrackingActive && _trackingStartedAt.HasValue)
         {
             var session = DateTime.UtcNow - _trackingStartedAt.Value;
@@ -1201,15 +1270,23 @@ public partial class MainWindowViewModel : ViewModelBase
             StatusMessage = "Session restored successfully.";
             IsAuthenticated = true;
 
+            // Check if user needs to accept terms
+            if (!_authSession.User.TermsAccepted)
+            {
+                IsTermsVisible = true;
+                StatusMessage = "Please review and accept the Company Usage Disclosure.";
+            }
+
             if (_config.RememberMe)
             {
                 _config.LastSession = _authSession;
+                _config.TermsAccepted = _authSession.User.TermsAccepted;
                 _config.Save();
             }
 
             _ = SyncAdminSecretsAsync();
 
-            if (AutoConnect)
+            if (AutoConnect && !IsTermsVisible)
             {
                 await ConnectAsync();
             }

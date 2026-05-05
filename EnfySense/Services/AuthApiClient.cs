@@ -157,6 +157,18 @@ public sealed class AuthApiClient
         }
     }
 
+    public async Task<bool> AcceptTermsAsync(
+        string backendUrl,
+        string accessToken,
+        CancellationToken cancellationToken = default)
+    {
+        using var client = CreateClient(backendUrl);
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var response = await client.PostAsync("auth/accept-terms", null, cancellationToken);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<T?> GetAsync<T>(string url, string? accessToken = null, CancellationToken cancellationToken = default)
     {
         using var client = new HttpClient();
@@ -428,6 +440,8 @@ public sealed class AuthUserInfo
     public string Email { get; init; } = string.Empty;
     public string? FullName { get; init; }
     public string[] Roles { get; init; } = Array.Empty<string>();
+    public bool TermsAccepted { get; init; }
+
 
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(FullName) ? Email : FullName!;

@@ -711,6 +711,16 @@
                 </StackPanel>
               </Button>
               <TextBlock Text="{Binding StatusMessage}" Foreground="#EF4444" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" />
+              <Button Command="{Binding UnlockAdminCommand}" 
+                      IsVisible="{Binding !IsAdminMode}"
+                      Background="Transparent" 
+                      HorizontalAlignment="Center"
+                      Padding="10">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <PathIcon Data="{StaticResource lock_regular}" Width="12" Height="12" Foreground="#64748B" />
+                  <TextBlock Text="Unlock Admin Access" FontSize="12" Foreground="#64748B" FontWeight="SemiBold" />
+                </StackPanel>
+              </Button>
             </StackPanel>
          </Border>
        </StackPanel>
@@ -730,7 +740,70 @@
        </StackPanel>
     </Border>
 
+    <!-- Terms and Conditions Overlay -->
+
+    <Border Background="#CC000000" IsVisible="{Binding IsTermsVisible}" ZIndex="2000">
+      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Border Background="#111827" BorderBrush="#3B82F6" BorderThickness="1" CornerRadius="20" Padding="40" Width="550">
+          <StackPanel Spacing="30">
+            <StackPanel Spacing="12">
+              <TextBlock Text="EnfySense Workplace Productivity Disclosure" 
+                         FontSize="24" FontWeight="Bold" Foreground="White" 
+                         HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+              <Border Height="2" Background="#3B82F6" Width="60" HorizontalAlignment="Center" CornerRadius="1" />
+            </StackPanel>
+            
+            <TextBlock Text="This application is designed to track your work activity and productivity during business hours. While you are 'Clocked In', the system will:" 
+                       Foreground="#F8FAFC" FontSize="14" TextWrapping="Wrap" TextAlignment="Center" LineHeight="22" />
+
+            <Border Background="#1E293B" CornerRadius="12" Padding="20">
+              <StackPanel Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                   <PathIcon Data="{StaticResource chart_regular}" Width="16" Height="16" Foreground="#3B82F6" />
+                   <TextBlock Text="Record your active applications and websites to categorize work time." 
+                              Foreground="#94A3B8" FontSize="13" VerticalAlignment="Center" TextWrapping="Wrap" Width="420" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                   <PathIcon Data="{StaticResource camera_regular}" Width="16" Height="16" Foreground="#3B82F6" />
+                   <TextBlock Text="Capture periodic screen snapshots to verify work progress." 
+                              Foreground="#94A3B8" FontSize="13" VerticalAlignment="Center" TextWrapping="Wrap" Width="420" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                   <PathIcon Data="{StaticResource clock_regular}" Width="16" Height="16" Foreground="#3B82F6" />
+                   <TextBlock Text="Monitor your active working time and breaks for attendance and reporting." 
+                              Foreground="#94A3B8" FontSize="13" VerticalAlignment="Center" TextWrapping="Wrap" Width="420" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Background="#33EF4444" BorderBrush="#EF4444" BorderThickness="1" CornerRadius="12" Padding="20">
+              <StackPanel Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <TextBlock Text="⚠️" FontSize="16" VerticalAlignment="Center" />
+                  <TextBlock Text="IMPORTANT PRIVACY WARNING" FontWeight="Black" Foreground="#EF4444" FontSize="12" LetterSpacing="1" />
+                </StackPanel>
+                <TextBlock Text="Because this system captures screen data and application usage, DO NOT access personal bank accounts, private messages, or any sensitive personal information while you are clocked in." 
+                           Foreground="#F8FAFC" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" LineHeight="20" />
+              </StackPanel>
+            </Border>
+
+            <TextBlock Text="Always 'Clock Out' or 'Take a Break' before performing any personal activities to stop all tracking and screen capture. By clicking 'I Accept and Start Working', you acknowledge that your professional activity on this device is being monitored." 
+                       Foreground="#64748B" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" LineHeight="18" />
+
+            <Button Command="{Binding AcceptTermsCommand}" Classes="action" 
+                    HorizontalAlignment="Stretch" Background="#10B981" Foreground="White" Padding="18">
+              <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                <PathIcon Data="{StaticResource play_regular}" Width="16" Height="16" />
+                <TextBlock Text="I Accept and Start Working" FontWeight="Bold" FontSize="16" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Border>
+
     <!-- Applying Update Overlay -->
+
     <Border Background="#CC000000" IsVisible="{Binding IsApplyingUpdate}" ZIndex="1000">
       <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="24">
         <Border Background="#111827" BorderBrush="#3B82F6" BorderThickness="2" CornerRadius="24" Padding="40" Width="450">
