@@ -380,10 +380,7 @@
                 </Grid>
 
                 <StackPanel Spacing="16">
-                   <Grid ColumnDefinitions="*, Auto">
-                      <TextBlock Text="System Latency" Classes="label" FontSize="12" VerticalAlignment="Center" />
-                      <TextBlock Grid.Column="1" Text="12ms" Foreground="White" FontSize="14" FontWeight="Bold" FontFamily="Courier New" VerticalAlignment="Center" />
-                   </Grid>
+
                    
                    <StackPanel Spacing="6">
                       <ProgressBar Value="98" Height="6" CornerRadius="3" Background="#1E293B" Foreground="#10B981" />

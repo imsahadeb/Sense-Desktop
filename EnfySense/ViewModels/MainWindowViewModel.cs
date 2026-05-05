@@ -340,7 +340,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     
                     StatusMessage = "Today's stats synchronized.";
                     IsDataInSync = true;
-                    LastSyncDisplay = DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss");
+                    LastSyncDisplay = GetEasternTimeNow().ToString("MMM dd, yyyy HH:mm:ss");
                     UpdateDashboardTick(); 
                 });
             }
@@ -456,7 +456,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     }
 
                     StatusMessage = "Dashboard synchronized.";
-                    LastSyncDisplay = DateTime.Now.ToString("HH:mm:ss");
+                    LastSyncDisplay = GetEasternTimeNow().ToString("HH:mm:ss");
                 });
             }
         }
@@ -845,7 +845,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             IsConnected = true;
             IsDataInSync = true;
-            LastSyncDisplay = DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss");
+            LastSyncDisplay = GetEasternTimeNow().ToString("MMM dd, yyyy HH:mm:ss");
             StatusMessage = "Connected. Monitoring active.";
             
             _ = FetchTodayStatsAsync();
@@ -1216,6 +1216,21 @@ public partial class MainWindowViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private DateTime GetEasternTimeNow()
+    {
+        try
+        {
+            // Windows ID for US Eastern Time
+            var easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, easternZone);
+        }
+        catch
+        {
+            // Fallback to UTC-5 (EST) if zone not found
+            return DateTime.UtcNow.AddHours(-5);
         }
     }
 }
