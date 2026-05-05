@@ -329,7 +329,7 @@
                           <TextBlock Text="{Binding BreakTodayDisplay}" Foreground="White" FontSize="16" FontWeight="Bold" />
                        </StackPanel>
                     </Border>
-                    <Border Grid.Column="1" Background="#581C87" BackgroundOpacity="0.2" BorderBrush="#7E22CE" BorderThickness="1" CornerRadius="10" Padding="12" Margin="6,0,0,0">
+                    <Border Grid.Column="1" Background="#33581C87" BorderBrush="#7E22CE" BorderThickness="1" CornerRadius="10" Padding="12" Margin="6,0,0,0">
                        <StackPanel Spacing="2">
                           <StackPanel Orientation="Horizontal" Spacing="6">
                              <PathIcon Data="{StaticResource arrow_circle_up_regular}" Width="10" Height="10" Foreground="#A855F7" />

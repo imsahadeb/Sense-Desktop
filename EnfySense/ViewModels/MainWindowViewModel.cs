@@ -154,9 +154,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _statusColor = "#94A3B8";
 
     [ObservableProperty]
-    private string _lastSyncDisplay = "Never";
-
-    [ObservableProperty]
     private string _orgNameDisplay = "enfycon";
 
     [ObservableProperty]
@@ -190,7 +187,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [ObservableProperty]
-    private string _lastSyncDisplay = "Never synced";
+    private string _lastSyncDisplay = "Never";
 
     [ObservableProperty]
     private bool _isDataInSync = false;
