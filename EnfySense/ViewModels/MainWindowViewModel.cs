@@ -1207,17 +1207,30 @@ public partial class MainWindowViewModel : ViewModelBase
             var appPath = AppDomain.CurrentDomain.BaseDirectory;
             var uninstaller = Path.Combine(appPath, "unins000.exe");
 
-            // If not found locally, try to find it via Registry (for installed versions)
+            // If not found locally, try to find it via Registry (checking both 64-bit and 32-bit views)
             if (!File.Exists(uninstaller))
             {
-                string registryPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{64D4FA90-13D1-4EA5-901A-0F2CC3C44C80}_is1";
-                using (var key = Registry.LocalMachine.OpenSubKey(registryPath))
+                string appId = "{64D4FA90-13D1-4EA5-901A-0F2CC3C44C80}";
+                string registryPath = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{appId}_is1";
+                
+                // Check 64-bit registry first, then 32-bit
+                foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
                 {
-                    var uninstallString = key?.GetValue("UninstallString")?.ToString();
-                    if (!string.IsNullOrEmpty(uninstallString))
+                    using (var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view))
+                    using (var key = baseKey.OpenSubKey(registryPath))
                     {
-                        // UninstallString often contains quotes and arguments, we just want the EXE
-                        uninstaller = uninstallString.Replace("\"", "").Trim();
+                        var uninstallString = key?.GetValue("UninstallString")?.ToString();
+                        if (!string.IsNullOrEmpty(uninstallString))
+                        {
+                            // Remove quotes and handle potential arguments
+                            uninstaller = uninstallString.Replace("\"", "").Trim();
+                            if (uninstaller.EndsWith(" /SILENT") || uninstaller.EndsWith(" /VERYSILENT"))
+                            {
+                                uninstaller = uninstaller.Substring(0, uninstaller.LastIndexOf(' ')).Trim();
+                            }
+                            
+                            if (File.Exists(uninstaller)) break;
+                        }
                     }
                 }
             }
