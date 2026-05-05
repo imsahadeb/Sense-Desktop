@@ -401,28 +401,50 @@
 
             <Border Grid.Column="3" Classes="card" Margin="12,0,0,0">
               <StackPanel Spacing="16">
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                   <Border Width="32" Height="32" CornerRadius="8" Background="#F59E0B">
-                      <PathIcon Data="{StaticResource star_regular}" Width="16" Height="16" Foreground="White" />
-                   </Border>
-                   <TextBlock Text="TODAY'S SUMMARY" Classes="label" VerticalAlignment="Center" FontWeight="Bold" />
-                </StackPanel>
-                <Grid ColumnDefinitions="*, *" RowDefinitions="Auto">
-                   <StackPanel Grid.Column="0" Spacing="4">
-                      <StackPanel Orientation="Horizontal" Spacing="4">
-                         <PathIcon Data="{StaticResource chart_regular}" Width="10" Height="10" Foreground="#F59E0B" />
-                         <TextBlock Text="ACTIVITY SCORE" Classes="label" FontSize="10" FontWeight="Bold" />
-                      </StackPanel>
-                      <TextBlock Text="{Binding ActivityLevel}" Foreground="#FBBF24" FontSize="24" FontWeight="Bold" />
-                   </StackPanel>
-                   <StackPanel Grid.Column="1" Spacing="4">
-                      <StackPanel Orientation="Horizontal" Spacing="4">
-                         <PathIcon Data="{StaticResource pause_regular}" Width="10" Height="10" Foreground="#3B82F6" />
-                         <TextBlock Text="BREAKS" Classes="label" FontSize="10" FontWeight="Bold" />
-                      </StackPanel>
-                      <TextBlock Text="{Binding BreaksCount}" Foreground="#F8FAFC" FontSize="24" FontWeight="Bold" />
-                   </StackPanel>
-                </Grid>
+                 <Grid ColumnDefinitions="Auto, *">
+                    <Border Width="32" Height="32" CornerRadius="8" Background="#F59E0B">
+                       <PathIcon Data="{StaticResource star_regular}" Width="16" Height="16" Foreground="White" />
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="TODAY'S SUMMARY" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" Margin="12,0" />
+                 </Grid>
+                 
+                 <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto" ColumnSpacing="20" RowSpacing="16">
+                    <!-- Activity Score -->
+                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                       <StackPanel Orientation="Horizontal" Spacing="4">
+                          <PathIcon Data="{StaticResource chart_regular}" Width="10" Height="10" Foreground="#F59E0B" />
+                          <TextBlock Text="ACTIVITY SCORE" Classes="label" FontSize="9" FontWeight="Bold" />
+                       </StackPanel>
+                       <TextBlock Text="{Binding ActivityLevel}" Foreground="#F59E0B" FontSize="24" FontWeight="Bold" />
+                    </StackPanel>
+                    
+                    <!-- Breaks -->
+                    <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
+                       <StackPanel Orientation="Horizontal" Spacing="4">
+                          <PathIcon Data="{StaticResource pause_regular}" Width="10" Height="10" Foreground="#3B82F6" />
+                          <TextBlock Text="BREAKS" Classes="label" FontSize="9" FontWeight="Bold" />
+                       </StackPanel>
+                       <TextBlock Text="{Binding BreaksCount}" Foreground="White" FontSize="24" FontWeight="Bold" />
+                    </StackPanel>
+
+                    <!-- Clock In -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                       <StackPanel Orientation="Horizontal" Spacing="4">
+                          <PathIcon Data="{StaticResource clock_regular}" Width="10" Height="10" Foreground="#10B981" />
+                          <TextBlock Text="CLOCKED IN" Classes="label" FontSize="9" FontWeight="Bold" />
+                       </StackPanel>
+                       <TextBlock Text="{Binding ClockInDisplay}" Foreground="White" FontSize="18" FontWeight="Bold" />
+                    </StackPanel>
+
+                    <!-- Clock Out -->
+                    <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                       <StackPanel Orientation="Horizontal" Spacing="4">
+                          <PathIcon Data="{StaticResource arrow_circle_right_regular}" Width="10" Height="10" Foreground="#94A3B8" />
+                          <TextBlock Text="CLOCKED OUT" Classes="label" FontSize="9" FontWeight="Bold" />
+                       </StackPanel>
+                       <TextBlock Text="{Binding ClockOutDisplay}" Foreground="White" FontSize="18" FontWeight="Bold" />
+                    </StackPanel>
+                 </Grid>
               </StackPanel>
             </Border>
           </Grid>
