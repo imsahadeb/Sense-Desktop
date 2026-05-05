@@ -557,6 +557,8 @@ public partial class MainWindowViewModel : ViewModelBase
         TimeSpan totalBreak = _breakTodayAccumulated;
         int currentUtcHour = DateTime.UtcNow.Hour;
 
+        TimeSpan dayGoal = TimeSpan.FromHours(8);
+
         if (IsTrackingActive && _trackingStartedAt.HasValue)
         {
             var currentSession = DateTime.UtcNow - _trackingStartedAt.Value;
@@ -564,7 +566,6 @@ public partial class MainWindowViewModel : ViewModelBase
             else 
             {
                 // Calculate 8h split live
-                TimeSpan dayGoal = TimeSpan.FromHours(8);
                 TimeSpan currentTotalWork = _workTodayAccumulated + _overtimeTodayAccumulated + currentSession;
                 
                 if (currentTotalWork > dayGoal)
@@ -582,7 +583,6 @@ public partial class MainWindowViewModel : ViewModelBase
         else
         {
             // Calculate 8h split from accumulated
-            TimeSpan dayGoal = TimeSpan.FromHours(8);
             TimeSpan currentTotalWork = _workTodayAccumulated + _overtimeTodayAccumulated;
             if (currentTotalWork > dayGoal)
             {
@@ -620,7 +620,6 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         // Update Widget display (8-Hour Rule)
-        TimeSpan dayGoal = TimeSpan.FromHours(8);
         if (totalWork <= dayGoal)
         {
             WidgetTimeDisplay = totalWork.ToString(@"hh\:mm\:ss");
@@ -1031,13 +1030,6 @@ public partial class MainWindowViewModel : ViewModelBase
             _activityService.IsEnabled = !IsPaused;
         }
 
-        if (_agent != null)
-        {
-            _ = _agent.ReportWorkStatusAsync(IsPaused ? "BREAK" : "WORKING",
-                (int)_workTodayAccumulated.TotalSeconds,
-                (int)_overtimeTodayAccumulated.TotalSeconds,
-                (int)_breakTodayAccumulated.TotalSeconds);
-        }
     }
 
     [RelayCommand]
