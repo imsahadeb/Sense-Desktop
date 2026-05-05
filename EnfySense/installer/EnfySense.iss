@@ -35,6 +35,13 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 ; Allow the user to choose between "Install for all users" and "Install for me only"
 PrivilegesRequiredOverridesAllowed=dialog
+; Default to user-level but allow the dialog to elevate to admin
+PrivilegesRequired=none
+; Ensure the directory page is shown
+DisableDirPage=no
+; Do not skip pages based on previous installations (good for testing)
+UsePreviousAppDir=no
+UsePreviousPrivileges=no
 OutputDir={#OutputDir}
 OutputBaseFilename=EnfySense-Setup-{#MyAppVersion}
 Compression=lzma
@@ -42,8 +49,6 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-; Default to admin but allow override via the dialog
-PrivilegesRequired=admin
 SetupIconFile=logo.ico
 WizardSmallImageFile=logo_small.bmp
 UninstallDisplayIcon={app}\{#MyAppExeName}

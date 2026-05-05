@@ -80,23 +80,33 @@ public sealed class AppConfig
     {
         try
         {
+            AppConfig config;
+
             // 1. Try Local User Config (Highest priority)
             if (File.Exists(ConfigPath))
             {
                 var json = File.ReadAllText(ConfigPath);
-                return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+                config = JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
             }
-
             // 2. Try Global Machine Config (From Installer)
-            if (File.Exists(GlobalConfigPath))
+            else if (File.Exists(GlobalConfigPath))
             {
                 var json = File.ReadAllText(GlobalConfigPath);
-                return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+                config = JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+            }
+            else
+            {
+                // 3. New Default Config
+                config = new AppConfig();
             }
 
-            // 3. New Default Config
-            var config = new AppConfig();
-            config.Save();
+            // Migration: If the config is pointing to localhost (dev leftover), force it to production
+            if (config.BackendUrl != null && config.BackendUrl.Contains("localhost"))
+            {
+                config.BackendUrl = "https://backend.enfycon.com";
+                config.Save();
+            }
+
             return config;
         }
         catch (Exception ex)
