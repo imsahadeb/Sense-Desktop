@@ -538,7 +538,7 @@ public partial class MainWindowViewModel : ViewModelBase
         WorkTodayDisplay = FormatTimeSpan(totalWork + totalOvertime);
         OvertimeTodayDisplay = FormatTimeSpan(totalOvertime);
         BreakTodayDisplay = FormatTimeSpan(totalBreak);
-        TodayHoursDisplay = ((totalWork.TotalSeconds + totalOvertime.TotalSeconds) / 3600.0).ToString("0.0") + "h";
+        TodayHoursDisplay = FormatTimeSpan(totalWork + totalOvertime);
 
         // Update Status Badge
         if (!IsTrackingActive)
