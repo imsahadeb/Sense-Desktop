@@ -141,6 +141,11 @@
                     <PathIcon Data="{StaticResource stop_regular}" Foreground="#EF4444" Width="14" Height="14" />
                   </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="App Settings" Command="{Binding ToggleSettingsCommand}">
+                  <MenuItem.Icon>
+                    <PathIcon Data="{StaticResource settings_regular}" Width="14" Height="14" />
+                  </MenuItem.Icon>
+                </MenuItem>
                 <Separator IsVisible="{Binding !IsAdminMode}" />
                 <MenuItem Header="Unlock Admin Mode" Command="{Binding UnlockAdminCommand}" IsVisible="{Binding !IsAdminMode}">
                   <MenuItem.Icon>
@@ -915,6 +920,91 @@
             
             <TextBlock Text="Tip: If you're just taking a break, use the 'Take a Break' button instead." 
                        FontSize="11" Foreground="#64748B" TextAlignment="Center" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <!-- App Settings Overlay -->
+    <Border Background="#CC000000" IsVisible="{Binding IsSettingsVisible}" ZIndex="100">
+      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Border Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="20" Padding="32" Width="480">
+          <StackPanel Spacing="24">
+            <!-- Header -->
+            <Grid ColumnDefinitions="*, Auto">
+              <StackPanel Grid.Column="0" Spacing="4">
+                <TextBlock Text="Application Settings" FontSize="24" FontWeight="Bold" Foreground="White" />
+                <TextBlock Text="Personalize your workplace experience" FontSize="13" Foreground="#64748B" />
+              </StackPanel>
+              <Button Grid.Column="1" Command="{Binding ToggleSettingsCommand}" Background="Transparent" Padding="8">
+                <PathIcon Data="{StaticResource stop_regular}" Width="14" Height="14" Foreground="#94A3B8" RenderTransform="rotate(45deg)" />
+              </Button>
+            </Grid>
+
+            <Separator Background="#1F2937" Opacity="0.5" />
+
+            <!-- Floating Button Setting -->
+            <Border Background="#1E293B" CornerRadius="12" Padding="20">
+              <Grid ColumnDefinitions="*, Auto">
+                <StackPanel Grid.Column="0" Spacing="6" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <PathIcon Data="{StaticResource arrow_maximize_regular}" Width="16" Height="16" Foreground="#3B82F6" />
+                    <TextBlock Text="Floating Action Button" FontWeight="SemiBold" Foreground="White" FontSize="15" />
+                  </StackPanel>
+                  <TextBlock Text="Show a small, movable widget on your desktop." FontSize="12" Foreground="#94A3B8" TextWrapping="Wrap" />
+                  
+                  <!-- Info on hover -->
+                  <TextBlock IsVisible="True" FontSize="11" Foreground="#6366F1" FontWeight="Medium" Margin="0,4,0,0">
+                    <ToolTip.Tip>
+                      <StackPanel Spacing="8" Width="250">
+                        <TextBlock Text="Floating Button Mode" FontWeight="Bold" Foreground="White" />
+                        <TextBlock Text="ON: A minimal widget shows your current work time over other apps. Perfect for staying focused." Foreground="#CBD5E1" TextWrapping="Wrap" />
+                        <TextBlock Text="OFF: The app stays in the taskbar/window only. No overlay will appear on your screen." Foreground="#CBD5E1" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </ToolTip.Tip>
+                    Hover for details
+                  </TextBlock>
+                </StackPanel>
+                <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowFloatingWidget}" 
+                             OnContent="Visible" OffContent="Hidden" 
+                             Theme="{StaticResource {x:Type ToggleSwitch}}"
+                             VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+
+            <!-- Auto Mode Setting -->
+            <Border Background="#1E293B" CornerRadius="12" Padding="20">
+              <Grid ColumnDefinitions="*, Auto">
+                <StackPanel Grid.Column="0" Spacing="6" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <PathIcon Data="{StaticResource clock_regular}" Width="16" Height="16" Foreground="#10B981" />
+                    <TextBlock Text="Auto Intelligence Mode" FontWeight="SemiBold" Foreground="White" FontSize="15" />
+                  </StackPanel>
+                  <TextBlock Text="Automatically pause/resume based on activity." FontSize="12" Foreground="#94A3B8" TextWrapping="Wrap" />
+
+                  <!-- Info on hover -->
+                  <TextBlock IsVisible="True" FontSize="11" Foreground="#6366F1" FontWeight="Medium" Margin="0,4,0,0">
+                    <ToolTip.Tip>
+                      <StackPanel Spacing="8" Width="250">
+                        <TextBlock Text="Auto Mode Intelligence" FontWeight="Bold" Foreground="White" />
+                        <TextBlock Text="ON: If you leave your desk, work time pauses automatically. When you return, it resumes instantly." Foreground="#CBD5E1" TextWrapping="Wrap" />
+                        <TextBlock Text="OFF: You must manually click 'Take a Break' and 'Resume Work'. No automatic detection." Foreground="#CBD5E1" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </ToolTip.Tip>
+                    Hover for details
+                  </TextBlock>
+                </StackPanel>
+                <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsAutoModeEnabled}" 
+                             OnContent="Active" OffContent="Manual" 
+                             VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+
+            <Button Command="{Binding ToggleSettingsCommand}" Classes="action" HorizontalAlignment="Stretch" Background="#3B82F6" Foreground="White" Height="44">
+              <TextBlock Text="Done" FontWeight="SemiBold" />
+            </Button>
+            
+            <TextBlock Text="Settings are saved locally on this device." FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" />
           </StackPanel>
         </Border>
       </StackPanel>

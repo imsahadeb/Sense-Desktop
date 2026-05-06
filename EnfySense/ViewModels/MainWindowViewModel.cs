@@ -184,6 +184,41 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isWidgetActive = false;
 
+    [ObservableProperty]
+    private bool _isSettingsVisible = false;
+
+    [ObservableProperty]
+    private bool _showFloatingWidget = true;
+
+    [ObservableProperty]
+    private bool _isAutoModeEnabled = true;
+
+    partial void OnShowFloatingWidgetChanged(bool value)
+    {
+        _config.ShowFloatingWidget = value;
+        _config.Save();
+        
+        if (!value && IsWidgetActive)
+        {
+            ExpandToFullView();
+        }
+    }
+
+    partial void OnIsAutoModeEnabledChanged(bool value)
+    {
+        _config.IsAutoModeEnabled = value;
+        _config.Save();
+        
+        AppLogger.Log($"Auto Mode toggled: {value}");
+    }
+
+    [RelayCommand]
+    private void ToggleSettings()
+    {
+        IsSettingsVisible = !IsSettingsVisible;
+    }
+
+
     [RelayCommand]
     public void ExpandToFullView()
     {
@@ -198,6 +233,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     public void ShowWidget()
     {
+        if (!ShowFloatingWidget)
+        {
+            StatusMessage = "Floating widget is disabled in settings.";
+            return;
+        }
         IsWidgetActive = true;
         if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -324,6 +364,8 @@ public partial class MainWindowViewModel : ViewModelBase
         
         DeviceId = new LiveStreamAgent(BackendUrl, DeviceName).DeviceId;
         AutoConnect = _config.AutoConnect;
+        ShowFloatingWidget = _config.ShowFloatingWidget;
+        IsAutoModeEnabled = _config.IsAutoModeEnabled;
 
         if (AutoConnect)
         {
@@ -917,7 +959,7 @@ public partial class MainWindowViewModel : ViewModelBase
             };
 
             _activityService.InactivityTimeout += () => Dispatcher.UIThread.Post(() => {
-                if (IsTrackingActive && !IsPaused)
+                if (IsTrackingActive && !IsPaused && IsAutoModeEnabled)
                 {
                     AppLogger.Log("Inactivity threshold hit. Adjusting time retroactively.");
                     
@@ -948,7 +990,7 @@ public partial class MainWindowViewModel : ViewModelBase
             });
 
             _activityService.InactivityResumed += () => Dispatcher.UIThread.Post(() => {
-                if (IsTrackingActive && IsPaused)
+                if (IsTrackingActive && IsPaused && IsAutoModeEnabled)
                 {
                     AppLogger.Log("Inactivity resumed received in ViewModel. Triggering PauseTracking to resume.");
                     PauseTracking();

@@ -54,6 +54,8 @@ public sealed class AppConfig
     public string KeycloakClientId { get; set; } = "submission_tracker_app";
     public bool RememberMe { get; set; } = true;
     public bool TermsAccepted { get; set; } = false;
+    public bool ShowFloatingWidget { get; set; } = true;
+    public bool IsAutoModeEnabled { get; set; } = true;
     public AuthSession? LastSession { get; set; }
 
     /// <summary>
