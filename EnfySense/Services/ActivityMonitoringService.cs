@@ -83,12 +83,15 @@ public class ActivityMonitoringService : IDisposable
 
     private void OnTick(object? state)
     {
-        if (!_isEnabled) return;
         if (Interlocked.Exchange(ref _isProcessing, 1) == 1) return;
 
         try
         {
+            // Always check idle status so we can detect when the user returns from break
             CheckIdleStatus();
+
+            // If tracking is disabled (e.g., user is on break), don't record apps/URLs
+            if (!_isEnabled) return;
 
             IntPtr hWnd = GetForegroundWindow();
             if (hWnd == IntPtr.Zero) return;
