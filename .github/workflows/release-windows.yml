@@ -34,6 +34,8 @@ jobs:
 
 
       - name: Set Version Environment Variable
+        env:
+          CHANGELOG: ${{ steps.tag_version.outputs.changelog }}
         run: |
           echo "VERSION=${{ steps.tag_version.outputs.new_version }}" >> $env:GITHUB_ENV
           echo "TAG=${{ steps.tag_version.outputs.new_tag }}" >> $env:GITHUB_ENV
@@ -43,9 +45,7 @@ jobs:
               Get-Content "RELEASE_NOTES.md" -Raw | Out-File -FilePath "release_notes.txt" -Encoding utf8
               echo "Using manual release notes from RELEASE_NOTES.md"
           } else {
-              @"
-${{ steps.tag_version.outputs.changelog }}
-"@ | Out-File -FilePath "release_notes.txt" -Encoding utf8
+              $env:CHANGELOG | Out-File -FilePath "release_notes.txt" -Encoding utf8
               echo "Using automated release notes from commit messages"
           }
         shell: powershell
