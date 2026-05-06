@@ -764,6 +764,12 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void DismissUpdate()
+    {
+        IsUpdateAvailable = false;
+    }
+
+    [RelayCommand]
     private async Task ManualCheckForUpdates()
     {
         StatusMessage = "Checking for updates...";
