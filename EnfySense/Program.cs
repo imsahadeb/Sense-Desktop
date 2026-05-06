@@ -2,7 +2,7 @@ using Avalonia;
 using System;
 using System.Threading.Tasks;
 using EnfyLiveScreenClient.Services;
-using Velopack;
+
 
 namespace EnfyLiveScreenClient;
 
@@ -11,7 +11,16 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // Single instance check using a named Mutex
+        // 1. Handle command line arguments for uninstaller verification
+        // This must happen before single instance check so the uninstaller can verify even if the app is running.
+        if (args.Length >= 2 && args[0] == "--verify-totp")
+        {
+            string code = args[1];
+            bool isValid = AdminSecurityService.Instance.VerifyCode(code);
+            Environment.Exit(isValid ? 0 : 1);
+        }
+
+        // 2. Single instance check using a named Mutex
         // "Global\" prefix ensures the mutex is visible across all user sessions on the machine
         const string mutexName = "Global\\EnfySense-SingleInstance-73b9e40f-7b7e-4d8e-90f7-920f0f7f3f3f";
         using var mutex = new System.Threading.Mutex(false, mutexName);
@@ -23,17 +32,6 @@ internal static class Program
                 // App is already running, exit immediately without logging or showing UI
                 return;
             }
-
-            // Handle command line arguments for uninstaller verification
-            if (args.Length >= 2 && args[0] == "--verify-totp")
-            {
-                string code = args[1];
-                bool isValid = AdminSecurityService.Instance.VerifyCode(code);
-                Environment.Exit(isValid ? 0 : 1);
-            }
-
-            // It's important to run Velopack as early as possible in your App startup.
-            VelopackApp.Build().Run();
 
             // Setup global exception handling
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>

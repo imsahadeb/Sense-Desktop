@@ -60,13 +60,31 @@ dotnet publish "%PROJECT_FILE%" ^
   -p:Version=%VERSION% ^
   -o "%PUBLISH_DIR%"
 
-if errorlevel 1 (
-  echo.
-  echo Build failed.
-  echo.
-  pause
-  exit /b 1
-)
+if errorlevel 1 goto :failed
+
+echo Publishing watchdog files...
+dotnet publish "%ROOT_DIR%\EnfySense.Watchdog\EnfySense.Watchdog.csproj" ^
+  -c %CONFIGURATION% ^
+  -r %RUNTIME% ^
+  --self-contained true ^
+  -p:PublishSingleFile=true ^
+  -p:IncludeNativeLibrariesForSelfExtract=true ^
+  -p:DebugType=None ^
+  -p:DebugSymbols=false ^
+  -p:Version=%VERSION% ^
+  -o "%PUBLISH_DIR%"
+
+if errorlevel 1 goto :failed
+goto :build_installer
+
+:failed
+echo.
+echo Build failed.
+echo.
+pause
+exit /b 1
+
+:build_installer
 
 echo Building installer...
 "%ISCC_PATH%" ^

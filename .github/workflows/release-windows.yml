@@ -31,8 +31,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Install Velopack CLI
-        run: dotnet tool install -g vpk
+
 
       - name: Set Version Environment Variable
         run: |
@@ -63,22 +62,34 @@ jobs:
             -p:Version=${{ env.VERSION }} `
             -o artifacts/publish
 
-      - name: Package with Velopack
+      - name: Build Watchdog
         run: |
-          vpk pack `
-            -u EnfySense `
-            -v ${{ env.VERSION }} `
-            -p artifacts/publish `
-            -o artifacts/releases `
-            -e EnfySense.exe `
-            --releaseNotes release_notes.txt
+          dotnet publish EnfySense.Watchdog/EnfySense.Watchdog.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=${{ env.VERSION }} `
+            -o artifacts/publish
 
-      - name: Upload to GitHub Releases
+      - name: Build Installer with Inno Setup
         run: |
-          vpk upload github `
-            --repoUrl https://github.com/${{ github.repository }} `
-            --publish `
-            --releaseName "Release ${{ env.TAG }}" `
-            --tag ${{ env.TAG }} `
-            --token ${{ secrets.GITHUB_TOKEN }} `
-            --outputDir artifacts/releases
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DMyAppVersion=${{ env.VERSION }}" `
+            "/DSourceDir=${{ github.workspace }}\artifacts\publish" `
+            "/DOutputDir=${{ github.workspace }}\artifacts\installer" `
+            "${{ github.workspace }}\EnfySense\installer\EnfySense.iss"
+        shell: powershell
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ env.TAG }}
+          tag_name: ${{ env.TAG }}
+          body_path: release_notes.txt
+          files: artifacts/installer/*.exe
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: false

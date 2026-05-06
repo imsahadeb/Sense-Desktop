@@ -342,6 +342,7 @@ public partial class MainWindowViewModel : ViewModelBase
         AppVersion = version?.ToString(3) ?? "1.0.0";
 
         _ = TryAutoLoginAsync();
+        WatchdogService.Instance.StartMonitoring();
     }
 
     private void InitializeUpdateService()
@@ -754,6 +755,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
+            WatchdogService.Instance.StopWatchdog();
             await Disconnect();
             IsAuthenticated = false;
             IsAdminMode = false;
@@ -785,6 +787,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
         {
+            WatchdogService.Instance.StopWatchdog();
             desktop.Shutdown();
         }
     }

@@ -58,6 +58,7 @@ CloseApplications=yes
 
 [Registry]
 Root: HKA; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "EnfySense"; ValueData: """{app}\{#MyAppExeName}"" --startup"; Flags: uninsdeletevalue
+Root: HKA; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "EnfySenseWatchdog"; ValueData: """{app}\EnfySenseWatchdog.exe"""; Flags: uninsdeletevalue
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -74,6 +75,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\EnfySenseWatchdog.exe"; Description: "Launch Watchdog"; Flags: nowait postinstall skipifsilent
 
 [Code]
 // Write AdminTotpSecrets to appsettings.json during installation.
@@ -177,7 +179,9 @@ begin
     begin
       if ResultCode = 0 then
       begin
-        // Kill the app process if it's running before proceeding with removal
+        // Kill watchdog and app processes
+        Exec(ExpandConstant('{app}\EnfySenseWatchdog.exe'), '--stop', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        Exec('taskkill.exe', '/f /im EnfySenseWatchdog.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
         Exec('taskkill.exe', '/f /im {#MyAppExeName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
         Result := True;
       end
