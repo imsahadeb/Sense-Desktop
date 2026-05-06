@@ -40,10 +40,12 @@ jobs:
           
           # Use RELEASE_NOTES.md if it exists, otherwise use the automated changelog
           if (Test-Path "RELEASE_NOTES.md") {
-              Get-Content "RELEASE_NOTES.md" -Raw > release_notes.txt
+              Get-Content "RELEASE_NOTES.md" -Raw | Out-File -FilePath "release_notes.txt" -Encoding utf8
               echo "Using manual release notes from RELEASE_NOTES.md"
           } else {
-              echo "${{ steps.tag_version.outputs.changelog }}" > release_notes.txt
+              @"
+${{ steps.tag_version.outputs.changelog }}
+"@ | Out-File -FilePath "release_notes.txt" -Encoding utf8
               echo "Using automated release notes from commit messages"
           }
         shell: powershell
