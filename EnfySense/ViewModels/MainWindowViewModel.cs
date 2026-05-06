@@ -219,9 +219,7 @@ public partial class MainWindowViewModel : ViewModelBase
             IsBusy = true;
             StatusMessage = "Recording your acceptance...";
             
-            // Bypass API for now as per user request
-            // var success = await _authApiClient.AcceptTermsAsync(BackendUrl, _authSession?.AccessToken ?? "");
-            bool success = true;
+            var success = await _authApiClient.AcceptTermsAsync(BackendUrl, _authSession?.AccessToken ?? "");
 
             if (success)
             {
@@ -234,12 +232,16 @@ public partial class MainWindowViewModel : ViewModelBase
                     _authSession.User.TermsAccepted = true;
                 }
 
-                StatusMessage = "Acceptance recorded locally. Welcome to EnfySense.";
+                StatusMessage = "Acceptance recorded. Welcome to EnfySense.";
                 
                 if (AutoConnect)
                 {
                     await ConnectAsync();
                 }
+            }
+            else
+            {
+                StatusMessage = "Failed to record acceptance on the server. Please try again.";
             }
         }
         catch (Exception ex)
